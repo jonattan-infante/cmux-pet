@@ -70,9 +70,46 @@ final class VoiceTests: XCTestCase {
     /// El prompt que se le manda a Claude Code debe nombrar todas las clases;
     /// si se agrega una clase y no se actualiza el prompt, nunca llegan plantillas.
     func testElPromptCubreTodasLasClases() {
+        let prompt = Voice.prompt(persona: "Eres una prueba.", language: "es")
         for kind in Voice.kinds.keys {
-            XCTAssertTrue(Voice.prompt.contains("\"\(kind)\""),
+            XCTAssertTrue(prompt.contains("\"\(kind)\""),
                           "el prompt no menciona la clase \(kind)")
         }
+    }
+
+    /// La personalidad del pack tiene que llegar al prompt: es lo unico que
+    /// diferencia una mascota de otra.
+    func testElPromptIncluyeLaPersonalidad() {
+        let persona = "Eres un gato indiferente que dice mrrp."
+        let prompt = Voice.prompt(persona: persona, language: "es")
+        XCTAssertTrue(prompt.contains(persona))
+        XCTAssertTrue(prompt.contains("PERSONALIDAD"),
+                      "la personalidad debe venir marcada para que el modelo la respete")
+    }
+
+    /// Una mascota en otro idioma debe pedirlo explicitamente.
+    func testElPromptRespetaElIdioma() {
+        XCTAssertTrue(Voice.prompt(persona: "x", language: "es").contains("español neutro"))
+        XCTAssertTrue(Voice.prompt(persona: "x", language: "pt").contains("\"pt\""))
+    }
+
+    /// Las clases del validador y las del formato de pack son el mismo contrato.
+    func testLasClasesCoincidenConElFormatoDocumentado() {
+        XCTAssertEqual(Set(Voice.kinds.keys), Set([
+            "greeting", "agentDone", "commandDone", "commandError",
+            "attention", "working", "portUp", "portDown",
+        ]))
+    }
+
+    /// `validateReporting` es lo que usa `cmux-pet validate` para explicar que
+    /// clase se quedo sin plantillas en vez de callarlo.
+    func testReportaClasesQueSeQuedanVacias() {
+        let raw: [String: Any] = [
+            "portUp": ["*blip* un puerto se abrió."],          // sin marcadores
+            "greeting": ["*bip* hola."],
+        ]
+        let (ok, empty) = Voice.validateReporting(raw)
+        XCTAssertEqual(empty, ["portUp"])
+        XCTAssertNotNil(ok["greeting"])
     }
 }
