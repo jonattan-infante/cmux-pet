@@ -39,25 +39,19 @@ extension PetController {
            Date().timeIntervalSince(last) < config.narrateEverySeconds { return }
 
         let live = activities.values.sorted { $0.startedAt < $1.startedAt }
-        let text: String
-        if live.count == 1, let a = live[0] as AgentActivity? {
-            let ws = Droid.at(workspaceLabel(a.workspaceId))
-            text = Voice.shared.phrase("working", [
-                "agent": a.agent, "doing": a.doing, "time": a.elapsed, "where": ws,
-            ]) ?? Droid.say(.working, "\(a.agent) lleva \(a.elapsed)\(ws) \(a.doing).",
-                            closer: false)
-        } else {
-            // Dos sesiones del mismo agente en el mismo workspace leen igual:
-            // repetirlas es ruido, no informacion.
-            var parts: [String] = []
-            for a in live {
-                let ws = workspaceLabel(a.workspaceId)
-                let s = "\(a.agent)\(ws.isEmpty ? "" : " en \(ws)") \(a.doing)"
-                if !parts.contains(s) { parts.append(s) }
-            }
-            text = Droid.say(.working, "\(live.count) unidades trabajando: "
-                             + parts.prefix(3).joined(separator: ", ") + ".", closer: false)
-        }
+        guard let lead = live.first else { return }
+
+        // La plantilla "working" del pack habla de UN agente. Con varios se
+        // narra el que lleva más tiempo y se suma el resto con un sufijo neutro:
+        // asi la frase sigue siendo la voz de la mascota y no una lista del
+        // programa. Antes esto lo componia el programa y un gato acababa
+        // diciendo "*whirr*".
+        let ws = Wording.at(workspaceLabel(lead.workspaceId))
+        let distintos = Set(live.map { "\($0.agent)|\(workspaceLabel($0.workspaceId))|\($0.doing)" })
+        let base = Voice.shared.phrase("working", [
+            "agent": lead.agent, "doing": lead.doing, "time": lead.elapsed, "where": ws,
+        ]) ?? Wording.plain("\(lead.agent) lleva \(lead.elapsed)\(ws) \(lead.doing).")
+        let text = base + Wording.andOthers(distintos.count - 1)
 
         // Si el parte es identico al anterior no aporta nada.
         guard text != lastNarrationText else { return }
@@ -119,10 +113,10 @@ extension PetController {
     }
 
     func greet() {
+        let nombre = PetTheme.shared.name
         show(Bubble(mood: .info,
                     text: Voice.shared.phrase("greeting", [:])
-                        ?? Droid.say(.info, "Unidad en línea y vigilando tus agentes, comandos y puertos. Un click me lleva al último aviso, click derecho abre las opciones.",
-                                     closer: false),
+                        ?? Wording.plain("\(nombre) en línea, vigilando tus agentes, comandos y puertos."),
                     workspaceId: nil, sticky: false))
     }
 

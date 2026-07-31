@@ -53,16 +53,16 @@ final class FormatTests: XCTestCase {
     /// El verbo que se muestra sale del nombre de la herramienta, porque
     /// tool_input viene redactado en los eventos de cmux.
     func testHerramientaATexto() {
-        XCTAssertEqual(Droid.activity("Bash"), "corriendo comandos")
-        XCTAssertEqual(Droid.activity("Edit"), "editando archivos")
-        XCTAssertEqual(Droid.activity("Grep"), "buscando en el código")
-        XCTAssertEqual(Droid.activity(nil), "arrancando")
-        XCTAssertEqual(Droid.activity("HerramientaNueva"), "usando HerramientaNueva")
+        XCTAssertEqual(Wording.activity("Bash"), "corriendo comandos")
+        XCTAssertEqual(Wording.activity("Edit"), "editando archivos")
+        XCTAssertEqual(Wording.activity("Grep"), "buscando en el código")
+        XCTAssertEqual(Wording.activity(nil), "arrancando")
+        XCTAssertEqual(Wording.activity("HerramientaNueva"), "usando HerramientaNueva")
     }
 
     /// {where} ya trae la preposicion: las plantillas lo pegan directo.
     func testUbicacionTraeLaPreposicion() {
-        XCTAssertEqual(Droid.at("Fineract"), " en Fineract")
-        XCTAssertEqual(Droid.at(""), "")
+        XCTAssertEqual(Wording.at("Fineract"), " en Fineract")
+        XCTAssertEqual(Wording.at(""), "")
     }
 }

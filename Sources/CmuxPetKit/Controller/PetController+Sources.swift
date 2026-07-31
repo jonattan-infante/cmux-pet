@@ -57,19 +57,19 @@ extension PetController {
         let seconds = (e["seconds"] as? Double) ?? 0
         let command = truncate((e["command"] as? String) ?? "", 56)
         let wsId = e["workspace"] as? String
-        let ws = Droid.at(workspaceLabel(wsId))
+        let ws = Wording.at(workspaceLabel(wsId))
 
         if status != 0 {
             show(Bubble(mood: .error,
                         text: Voice.shared.phrase("commandError", [
                             "cmd": command, "code": "\(status)", "where": ws,
-                        ]) ?? Droid.say(.error, "\(command) falló con código \(status)\(ws)."),
+                        ]) ?? Wording.plain("\(command) falló con código \(status)\(ws)."),
                         workspaceId: wsId, sticky: false))
         } else {
             show(Bubble(mood: .done,
                         text: Voice.shared.phrase("commandDone", [
                             "cmd": command, "time": humanDuration(seconds), "where": ws,
-                        ]) ?? Droid.say(.done, "\(command) terminó en \(humanDuration(seconds))\(ws)."),
+                        ]) ?? Wording.plain("\(command) terminó en \(humanDuration(seconds))\(ws)."),
                         workspaceId: wsId, sticky: false))
         }
     }
@@ -123,17 +123,17 @@ extension PetController {
 
         for (ws, now) in fresh {
             let before = knownPorts[ws] ?? []
-            let label = Droid.at(workspaceLabel(ws))
+            let label = Wording.at(workspaceLabel(ws))
             for p in now.subtracting(before).sorted() {
                 show(Bubble(mood: .info,
                             text: Voice.shared.phrase("portUp", ["port": "\(p)", "where": label])
-                                ?? Droid.say(.info, "El puerto \(p) está escuchando\(label).", closer: false),
+                                ?? Wording.plain("El puerto \(p) está escuchando\(label)."),
                             workspaceId: ws, sticky: false))
             }
             for p in before.subtracting(now).sorted() {
                 show(Bubble(mood: .info,
                             text: Voice.shared.phrase("portDown", ["port": "\(p)", "where": label])
-                                ?? Droid.say(.info, "El puerto \(p) se cerró\(label).", closer: false),
+                                ?? Wording.plain("El puerto \(p) se cerró\(label)."),
                             workspaceId: ws, sticky: false))
             }
         }

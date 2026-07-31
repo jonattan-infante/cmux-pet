@@ -45,12 +45,26 @@ public func renderShowcase(to dir: URL) {
        let png = bmp.representation(using: .png, properties: [:]) {
         try? png.write(to: dir.appendingPathComponent("todos.png"))
     }
-    // Burbujas de terminal a distintos avances de escritura.
+    // Burbujas con las frases REALES de la mascota activa, rellenadas con datos
+    // de ejemplo. Asi `--render` es la vista previa de quien esta creando una
+    // mascota: se ve como habla, no un texto de muestra ajeno.
+    let nombre = PetTheme.shared.name
     let samples: [(Mood, String)] = [
-        (.done, Droid.say(.done, "./gradlew build terminó en 1 min 34 s en Fineract.")),
-        (.error, Droid.say(.error, "npm run test:e2e falló con código 1 en Backend.")),
-        (.attention, Droid.say(.attention, "Claude pide permiso para usar Bash en DB Connect.")),
-        (.info, Droid.say(.info, "Unidad en línea y vigilando tus agentes, comandos y puertos. Un click me lleva al último aviso, click derecho abre las opciones.", closer: false)),
+        (.done, Voice.shared.phrase("commandDone", [
+            "cmd": "./gradlew build", "time": "1 min 34 s", "where": " en Fineract",
+        ]) ?? Wording.plain("./gradlew build terminó en 1 min 34 s en Fineract.")),
+        (.error, Voice.shared.phrase("commandError", [
+            "cmd": "npm run test:e2e", "code": "1", "where": " en Backend",
+        ]) ?? Wording.plain("npm run test:e2e falló con código 1 en Backend.")),
+        (.attention, Voice.shared.phrase("attention", [
+            "agent": "Claude", "what": "un permiso para usar Bash", "where": " en DB Connect",
+        ]) ?? Wording.plain("Claude necesita un permiso para usar Bash en DB Connect.")),
+        (.working, Voice.shared.phrase("working", [
+            "agent": "Claude", "doing": "editando archivos", "time": "4 min",
+            "where": " en Fineract",
+        ]) ?? Wording.plain("Claude lleva 4 min en Fineract editando archivos.")),
+        (.info, Voice.shared.phrase("greeting", [:])
+            ?? Wording.plain("\(nombre) en línea, vigilando tus agentes, comandos y puertos.")),
     ]
     for (i, sample) in samples.enumerated() {
         let b = Bubble(mood: sample.0, text: sample.1, workspaceId: nil, sticky: false)

@@ -11,6 +11,6 @@ struct AgentActivity {
     var toolCount: Int = 0
 
     var elapsed: String { compactDuration(Date().timeIntervalSince(startedAt)) }
-    var doing: String { Droid.activity(currentTool) }
+    var doing: String { Wording.activity(currentTool) }
 }
 

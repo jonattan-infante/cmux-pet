@@ -156,8 +156,7 @@ extension PetController {
         guard denied, !warnedAboutSocket else { return }
         warnedAboutSocket = true
         show(Bubble(mood: .error,
-                    text: Droid.say(.error, "No me deja escuchar a cmux: rechaza el control externo. Revisa socketControlMode en cmux.json.",
-                                    closer: false),
+                    text: Wording.plain("No me deja escuchar a cmux: rechaza el control externo. Revisa socketControlMode en cmux.json."),
                     workspaceId: nil, sticky: true))
     }
 
@@ -173,8 +172,7 @@ extension PetController {
         guard fastStreamExits >= 2, !warnedAboutSocket else { return }
         warnedAboutSocket = true
         show(Bubble(mood: .error,
-                    text: Droid.say(.error, "El canal de eventos de cmux se me muere al arrancar. Revisa ~/.cmux-pet/pet.log.",
-                                    closer: false),
+                    text: Wording.plain("El canal de eventos de cmux se me muere al arrancar. Revisa ~/.cmux-pet/pet.log."),
                     workspaceId: nil, sticky: true))
     }
 
@@ -233,8 +231,8 @@ extension PetController {
             lastDoneAt[session] = Date()
             show(Bubble(mood: .done,
                         text: Voice.shared.phrase("agentDone", [
-                            "agent": agent, "where": Droid.at(workspaceLabel(wsId)),
-                        ]) ?? Droid.say(.done, "\(agent) terminó su turno\(Droid.at(workspaceLabel(wsId)))."),
+                            "agent": agent, "where": Wording.at(workspaceLabel(wsId)),
+                        ]) ?? Wording.plain("\(agent) terminó su turno\(Wording.at(workspaceLabel(wsId)))."),
                         workspaceId: wsId, sticky: false))
 
         case "agent.hook.PermissionRequest", "agent.hook.AskUserQuestion":
@@ -249,11 +247,11 @@ extension PetController {
             let what = (name.hasSuffix("AskUserQuestion") || tool == "AskUserQuestion")
                 ? "una pregunta"
                 : "un permiso" + (tool.map { " para usar \($0)" } ?? "")
-            let ws = Droid.at(workspaceLabel(wsId))
+            let ws = Wording.at(workspaceLabel(wsId))
             show(Bubble(mood: .attention,
                         text: Voice.shared.phrase("attention", [
                             "agent": agent, "what": what, "where": ws,
-                        ]) ?? Droid.say(.attention, "\(agent) necesita \(what)\(ws)."),
+                        ]) ?? Wording.plain("\(agent) necesita \(what)\(ws)."),
                         workspaceId: wsId, sticky: true))
 
         case "agent.hook.Notification":
@@ -264,8 +262,8 @@ extension PetController {
             show(Bubble(mood: .attention,
                         text: Voice.shared.phrase("attention", [
                             "agent": agent, "what": "una decisión tuya",
-                            "where": Droid.at(workspaceLabel(wsId)),
-                        ]) ?? Droid.say(.attention, "\(agent) dejó de trabajar\(Droid.at(workspaceLabel(wsId)))."),
+                            "where": Wording.at(workspaceLabel(wsId)),
+                        ]) ?? Wording.plain("\(agent) dejó de trabajar\(Wording.at(workspaceLabel(wsId)))."),
                         workspaceId: wsId, sticky: true))
 
         case "surface.focused", "surface.selected":
@@ -304,8 +302,8 @@ extension PetController {
                 let head = subtitle.isEmpty ? title : "\(title) — \(subtitle)"
                 var sentence = truncate(head, 60)
                 if !body.isEmpty { sentence += ": " + truncate(body, 110) }
-                sentence += Droid.at(wsTitle) + "."
-                self.show(Bubble(mood: .info, text: Droid.say(.info, sentence, closer: false),
+                sentence += Wording.at(wsTitle) + "."
+                self.show(Bubble(mood: .info, text: Wording.plain(sentence),
                                  workspaceId: wsId, sticky: false))
             }
         }
