@@ -16,12 +16,15 @@ archivos con tests.
 Baseline verde, verificado con comandos:
 
 ```
-swift build                    -> Build complete!
-swift test                     -> 18 tests, 0 fallos
-./scripts/test-shell-hooks.sh  -> 8 ok, salida 0
+make verify                       -> compila + 18 tests + 8 hooks + 12 instalador
 ./.build/debug/cmux-pet --version -> cmux-pet 0.1.0
-make render                    -> 8 PNG en ./render
+make render                       -> 15 PNG en ./render
+./install.sh --from-source        -> instalado y corriendo en la maquina del autor
 ```
+
+El asistente que corre ahora en la máquina del autor es **el binario que produce
+este repo**, instalado con `install.sh`, no el prototipo. El prototipo en
+`~/.cmux-pet/src` se eliminó para no tener dos fuentes de verdad.
 
 ## Próximo paso
 

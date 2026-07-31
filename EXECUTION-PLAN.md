@@ -13,6 +13,7 @@ estado es "por verificar".
 | P0.1 | El paquete compila | verde | `swift build` → `Build complete!` |
 | P0.2 | Tests de lógica pura | verde | `swift test` → 18 tests, 0 fallos |
 | P0.3 | Tests de hooks de zsh | verde | `./scripts/test-shell-hooks.sh` → 8 ok, salida 0 |
+| P0.3b | Tests del instalador | verde | `./scripts/test-installer.sh` → 12 ok, salida 0 |
 | P0.4 | El binario arranca y responde | verde | `./.build/debug/cmux-pet --version` → `cmux-pet 0.1.0` |
 | P0.5 | El dibujo se puede revisar sin pantalla | verde | `make render` → 6 PNG de estado + `todos.png` + `panel.png` |
 | P0.6 | Working tree limpio | verde | repo recién creado, primer commit |
@@ -35,6 +36,7 @@ estado es "por verificar".
 | Fallos de socket visibles en pantalla | `noteStreamError` / `noteStreamExit` con burbuja pegajosa |
 | Deduplicación de hooks duplicados (`received` + `completed`) | log antes: 2 avisos por evento; después: 1 |
 | Barrida de sesiones fantasma a los 10 min | `sweepStaleActivities()`, traza `barrida: N sesión(es) sin señal` |
+| Instalador y desinstalador probados de punta a punta | `./install.sh --from-source` sobre la máquina real: 1 instancia, aviso real entregado. Desinstalación cubierta por 12 casos en sandbox |
 
 ## En vuelo
 
