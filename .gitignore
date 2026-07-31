@@ -4,8 +4,9 @@
 Package.resolved
 *.xcodeproj
 
-# Salida del modo --render
-render/
+# Salida del modo --render (anclado a la raiz: sin la barra inicial tambien
+# excluiria Sources/CmuxPetKit/Render/, que es codigo)
+/render/
 
 # macOS
 .DS_Store
