@@ -8,6 +8,7 @@
 set -euo pipefail
 
 REPO_URL="https://github.com/jonattan-infante/cmux-pet.git"
+RAW_URL="https://raw.githubusercontent.com/jonattan-infante/cmux-pet/main/install.sh"
 PREFIX="${CMUX_PET_PREFIX:-$HOME/.cmux-pet}"
 ZSHRC="${ZDOTDIR:-$HOME}/.zshrc"
 SOURCE_LINE='source ~/.cmux-pet/shell/pet.zsh'
@@ -132,5 +133,11 @@ cat <<EOF
 
   En terminales que ya tenías abiertas:  source ~/.zshrc
   Log:                                   tail -f $PREFIX/pet.log
-  Quitar:                                $PREFIX/../cmux-pet/install.sh --uninstall
 EOF
+
+# El clon temporal del modo curl desaparece, asi que no se puede apuntar a el.
+if [[ "${1:-}" == "--from-source" ]]; then
+  echo "  Quitar:                                cd $SRC && ./install.sh --uninstall"
+else
+  echo "  Quitar:                                curl -fsSL $RAW_URL | bash -s -- --uninstall"
+fi
