@@ -11,9 +11,10 @@ estado es "por verificar".
 | # | Cosa | Estado | Evidencia |
 |---|---|---|---|
 | P0.1 | El paquete compila | verde | `swift build` → `Build complete!` |
-| P0.2 | Tests de lógica pura | verde | `swift test` → 18 tests, 0 fallos |
+| P0.2 | Tests de lógica pura | verde | `swift test` → 52 tests, 0 fallos |
 | P0.3 | Tests de hooks de zsh | verde | `./scripts/test-shell-hooks.sh` → 8 ok, salida 0 |
 | P0.3b | Tests del instalador | verde | `./scripts/test-installer.sh` → 12 ok, salida 0 |
+| P0.3c | Integridad del repo | verde | `./scripts/test-repo-integrity.sh` → 13 ok, salida 0 |
 | P0.4 | El binario arranca y responde | verde | `./.build/debug/cmux-pet --version` → `cmux-pet 0.1.0` |
 | P0.5 | El dibujo se puede revisar sin pantalla | verde | `make render` → 6 PNG de estado + `todos.png` + `panel.png` |
 | P0.6 | Working tree limpio | verde | repo recién creado, primer commit |
@@ -36,14 +37,20 @@ estado es "por verificar".
 | Fallos de socket visibles en pantalla | `noteStreamError` / `noteStreamExit` con burbuja pegajosa |
 | Deduplicación de hooks duplicados (`received` + `completed`) | log antes: 2 avisos por evento; después: 1 |
 | Barrida de sesiones fantasma a los 10 min | `sweepStaleActivities()`, traza `barrida: N sesión(es) sin señal` |
+| Formato de pet pack con validación en la frontera | 21 tests en `PetPackTests`: rutas con `..`, colores, sprites, semver, schema |
+| Marketplace: índice JSON, `search` e `install` desde registro, git o ruta local | `registry.json` + 9 tests en `RegistryTests`, dos de ellos validan el registro publicado |
+| Dos mascotas incluidas que solo difieren en personalidad | mismo aviso: astro dice "*bzzzt* … Algo no cuadra", gatito dice "… No fui yo" |
+| Voz por mascota generada desde `persona.md` | `~/.cmux-pet/voices/gatito.json`, 64 plantillas con voz felina, sin tocar código |
+| CLI de mascotas: list, use, info, install, uninstall, new, validate, voice, search | probados a mano sobre la máquina real; salida pegada en claude-progress |
+| Cambio de mascota en caliente desde el menú | `switchPet` reactiva tema y voz sin reiniciar el proceso |
 | Instalador y desinstalador probados de punta a punta | `./install.sh --from-source` sobre la máquina real: 1 instancia, aviso real entregado. Desinstalación cubierta por 12 casos en sandbox |
 
 ## En vuelo
 
 | # | Cosa | Estado | Próximo paso concreto |
 |---|---|---|---|
-| F1 | Publicar el repo | listo local, sin publicar | el dueño decide si lo sube; ya hay `install.sh` apuntando a la URL final |
-| F2 | CI en GitHub Actions | escrito, sin ejecutar ⚠️ 2026-07-31 | correrá en el primer push; `make render` queda fuera del gate (requiere sesión gráfica) |
+| F1 | Mascotas con arte propio | el renderer `sprites` funciona, pero ningún pack incluido lo usa | hacer un pack de ejemplo con sprites, aunque sean formas simples, para que se vea el camino |
+| F2 | Más renderers integrados | solo hay `vector:droid` | un pack sin arte solo puede verse como droide; ver B10 |
 
 ## Riesgos
 
@@ -53,6 +60,9 @@ estado es "por verificar".
 | R2 | El formato de eventos de cmux puede cambiar entre versiones | el asistente deja de reportar | `docs/reference/cmux-events.md` documenta lo verificado con fecha y versión; el fallo es visible, no silencioso |
 | R3 | La generación de voz consume cuota del usuario | molestia | una llamada cada 7 días; se puede apagar borrando `voice.json` y no regenerando |
 | R4 | `PetController+Events.swift` tiene 314 líneas y crece con cada tipo de evento | difícil de navegar | dividir por categoría si pasa de ~400 (B4) |
+| R5 | Un pack del marketplace trae arte de un personaje con dueño | problema legal para el autor y para el índice | regla explícita en `docs/marketplace.md`, revisión en el PR, y se quita del índice al detectarlo. **Depende de revisión humana** ⚠️ 2026-07-31 |
+| R6 | Un pack malicioso apunta sprites fuera de su carpeta | leer archivos del usuario | `..` prohibido en rutas, cubierto por test. Un pack no ejecuta código: solo aporta texto e imágenes |
+| R7 | El registro crece y el `git clone --depth 1` por install se vuelve costoso | instalación lenta | hoy son 2 entradas; si crece, cachear o servir tarballs (B11) |
 
 ## Backlog
 
@@ -60,6 +70,8 @@ Ordenado por relación valor/esfuerzo, no por antojo.
 
 | # | Cosa | Por qué | Esfuerzo |
 |---|---|---|---|
+| B10 | Más renderers integrados (`vector:gato`, `vector:blob`) | hoy un pack sin arte solo puede verse como droide, aunque hable como gato | medio |
+| B11 | Página del marketplace con capturas de cada mascota | el índice JSON no deja ver cómo se ven; una galería sí | medio |
 | B1 | Sonido opcional por estado | un aviso visual en la esquina se pierde si miras otra pantalla | bajo |
 | B2 | Click derecho en el panel de estado → saltar a ese agente | el panel ya sabe el workspace de cada uno | bajo |
 | B3 | Recarga en caliente de `config.json` | hoy hay que reiniciar para cambiar `narrateEverySeconds` | bajo |

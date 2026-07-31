@@ -41,7 +41,8 @@ lo dice; no invente hallazgos para justificar la corrida.
 
 ## `pet-visual-checker` — verifica que se vea bien
 
-**Cuándo:** el cambio toca `Views/`, la paleta, el layout o los textos.
+**Cuándo:** el cambio toca `Views/`, la paleta, el layout, los textos, o un pet
+pack.
 
 **Por qué existe:** este repo tiene un juez mecánico para lo visual. `make render`
 escribe un PNG por estado sin abrir ventana, así que un agente puede **mirar** el
@@ -56,6 +57,8 @@ make render          # ./render/todos.png, panel.png, burbuja-*.png
 Y después abre las imágenes y las revisa contra esta lista:
 
 - Los 6 estados se distinguen entre sí de un vistazo.
+- Si el cambio toca un pack: `cmux-pet validate` pasa, y `make render` con esa
+  mascota activa muestra sus colores, no los de otra.
 - Ningún texto se corta ni se sale de su tarjeta (el defecto de `docs/adr/0003`
   se detectó exactamente así).
 - La tarjeta no cambia de tamaño entre "escribiendo" y "completo".
@@ -69,7 +72,8 @@ Y después abre las imágenes y las revisa contra esta lista:
 | Rol | Por qué no existe todavía | Cuándo crearlo |
 |---|---|---|
 | Producto | el dueño escribe las specs; el contrato spec→tareas no ha rodado ni una feature | después de 2-3 features con spec |
-| Seguridad | la superficie es un socket local y un binario sin red; `make verify` y una lectura cubren | si se agrega red o se distribuye firmado |
+| Seguridad | la superficie es un socket local, un binario sin red y paquetes de datos sin código ejecutable; `make verify` y una lectura cubren | si un pack pudiera ejecutar algo, o al aceptar packs de desconocidos a volumen |
+| Curador del marketplace | hoy son 2 mascotas y el PR lo revisa el dueño | cuando lleguen PRs de terceros con regularidad |
 | DevOps | un workflow de CI y un `Makefile` alcanzan | si el pipeline pasa de un job |
 | Orquestador | el flujo de control vive en artefactos y en la checklist, no en un agente | probablemente nunca: un orquestador gordo esconde el flujo |
 

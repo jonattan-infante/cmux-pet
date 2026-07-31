@@ -1,7 +1,7 @@
 # cmux-pet
 
-Un droide flotante que te cuenta qué están haciendo tus agentes de IA en
-[cmux](https://cmux.com).
+Una mascota flotante que te cuenta qué están haciendo tus agentes de IA en
+[cmux](https://cmux.com). **Elige la tuya, o hazla.**
 
 Cuando trabajas con varios agentes en paralelo pierdes el hilo: terminan en
 workspaces que no estás mirando, se quedan esperando permiso, los builds pasan sin
@@ -19,6 +19,101 @@ que te enteres. cmux ya publica todo eso; cmux-pet lo pone donde lo veas.
 
 macOS · Swift · sin dependencias · un binario de 800 KB
 
+## Instalar
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jonattan-infante/cmux-pet/main/install.sh | bash
+```
+
+Necesitas macOS 13 o más, cmux, y Swift (viene con Xcode o con
+`xcode-select --install`). Abre una terminal de cmux y la mascota aparece en la
+esquina inferior derecha.
+
+## Elegir mascota
+
+El programa es uno; las mascotas son muchas. Vienen dos instaladas:
+
+| id | Mascota | Cómo habla |
+|---|---|---|
+| `astro` | Astro | droide de servicio: *bip-bip*, seco, con carácter |
+| `gatito` | Gatito | indiferencia felina: te avisa, pero tenía otros planes |
+
+```bash
+cmux-pet list                  # las instaladas, con la activa marcada
+cmux-pet use gatito            # cambiar, en caliente
+cmux-pet search                # ver el marketplace
+cmux-pet install <id> --use    # instalar y activar
+```
+
+La misma alerta, dos personalidades:
+
+```
+astro   › *bzzzt* npm run build falló con código 1 en Backend. Algo no cuadra.
+gatito  › npm run build se rompió, código 1 en Backend. No fui yo.
+```
+
+## Hacer la tuya
+
+**No hace falta programar.** Una mascota es una carpeta con un archivo que
+describe cómo habla.
+
+```bash
+cmux-pet new mi-mascota        # crea un paquete que ya funciona
+# edita mi-mascota/persona.md  <- lo único imprescindible
+cmux-pet validate ./mi-mascota
+cmux-pet install ./mi-mascota --use
+cmux-pet voice mi-mascota      # Claude Code le escribe sus frases
+```
+
+`persona.md` es prosa, no configuración:
+
+```markdown
+Eres Gatito, un gato que vive flotando sobre la pantalla de un programador.
+
+Tu tono es de indiferencia felina cortés: informas lo que pasó, pero dejas claro
+que tú tenías otros planes. Nunca eres grosero.
+
+Usas sonidos de gato con moderación: "mrrp", "miau", "prrr". No en todas las
+frases, y nunca más de uno por frase.
+```
+
+Con eso, `cmux-pet voice` produjo 64 frases como estas:
+
+```
+{cmd} explotó{where}, código {code}, fffs. Vuelvo a mi caja.
+{agent} lleva {time} {doing}{where}. Yo llevo el mismo tiempo sin moverme del sol.
+```
+
+Usa tu sesión local de Claude Code: **sin API key**. Y si no tienes Claude Code, la
+mascota habla igual con las frases de respaldo del paquete.
+
+### Con tu propio arte
+
+```bash
+cmux-pet new mi-gato --sprites
+# pon idle.png, working.gif, done.png... en mi-gato/sprites/
+```
+
+Los GIF se animan solos. Sin arte, se usa el droide vectorial integrado tintado
+con tus colores; no pesa nada y no involucra arte de nadie.
+
+El formato completo está en [`docs/reference/pet-pack.md`](docs/reference/pet-pack.md).
+
+## Publicar en el marketplace
+
+El marketplace es un JSON en este repositorio. **No hay servidor, ni cuentas, ni
+pagos.** Cada entrada apunta al repositorio del autor, así que tu arte se queda
+donde tú quieras.
+
+1. Sube tu paquete a un repositorio público tuyo.
+2. Abre un PR que agregue una entrada a `registry.json`.
+3. Al mergearse: `cmux-pet install tu-id` funciona para todo el mundo.
+
+Detalles y qué se revisa: [`docs/marketplace.md`](docs/marketplace.md).
+
+Una regla que no se negocia: **nada de arte de personajes con dueño.** R2-D2,
+Pikachu, Clippy y compañía son marcas registradas.
+
 ## Qué hace
 
 - **Avisa cuando un agente termina** su turno, y en qué workspace.
@@ -29,49 +124,26 @@ macOS · Swift · sin dependencias · un binario de 800 KB
 - **Avisa de comandos largos** (más de 20 s) y de cualquier comando que falle.
 - **Avisa de puertos** que empiezan y dejan de escuchar.
 - **Un click te lleva** al workspace del aviso y trae cmux al frente.
-- **Sus frases las escribe Claude Code** con tu sesión local, así que no suenan
-  siempre igual. Sin API key.
-
-## Instalar
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/jonattan-infante/cmux-pet/main/install.sh | bash
-```
-
-Necesitas macOS 13 o más, cmux, y Swift (viene con Xcode o con
-`xcode-select --install`).
-
-El instalador compila, deja el binario en `~/.cmux-pet/bin/`, y agrega una línea a
-tu `.zshrc` (con backup). Abre una terminal de cmux y el droide aparece en la
-esquina inferior derecha.
-
-Desde un clon:
-
-```bash
-git clone https://github.com/jonattan-infante/cmux-pet.git
-cd cmux-pet && make install
-```
-
-Para quitarlo: `./install.sh --uninstall`. Conserva tus preferencias y sprites.
-
-## Usarlo
 
 | Acción | Qué pasa |
 |---|---|
 | Click | salta al workspace del último aviso |
-| Arrastrar | lo mueves; recuerda la posición |
+| Arrastrar | la mueves; recuerda la posición |
 | Mouse encima | panel con el estado de cada agente |
-| Click derecho | silenciar, vigilar puertos, reescribir sus frases, sprites, salir |
+| Click derecho | cambiar de mascota, silenciar, reescribir frases, salir |
 
-## Los estados
+## Los seis estados
 
-| Estado | Cómo se ve | Cuándo |
-|---|---|---|
-| en reposo | lente azul, cúpula mirando alrededor | nada en curso |
-| trabajando | lente ámbar, cúpula girando, luces en secuencia | hay agentes activos |
-| listo | lente verde, salta | terminó bien |
-| falló | lente roja parpadeando, se sacude | exit code distinto de cero |
-| te necesita | lente naranja latiendo, signo de admiración | pide permiso o pregunta |
+Toda mascota tiene que poder expresar estos seis. Es el vocabulario del sistema.
+
+| Estado | Cuándo |
+|---|---|
+| en reposo | nada en curso |
+| trabajando | hay agentes activos |
+| listo | terminó bien |
+| falló | exit code distinto de cero |
+| te necesita | pide permiso o pregunta |
+| info | notificación o puerto |
 
 Para verlos sin instalar nada:
 
@@ -97,6 +169,7 @@ Y si aun así molesta: click derecho, **Silenciar avisos**.
 
 ```json
 {
+  "activePet": "gatito",
   "quiet": false,
   "watchPorts": true,
   "notifyWhileWatching": false,
@@ -110,42 +183,31 @@ En `~/.zshrc`, antes del `source`:
 export CMUX_PET_MIN_SECONDS=20        # umbral de "comando largo"
 export CMUX_PET_IGNORE="vim ssh ..."  # denylist
 export CMUX_PET_NO_AUTOSTART=1        # no arrancar solo
+export CMUX_PET_REGISTRY=<url>        # usar otro marketplace
 ```
-
-## Tu propio personaje
-
-El droide está dibujado con Core Graphics, no es una imagen. **No se usa arte de
-Star Wars**: R2-D2 es propiedad de Lucasfilm. Si quieres otro personaje, suelta
-imágenes en `~/.cmux-pet/sprites/`:
-
-```
-idle.png  working.gif  done.png  error.png  attention.png  info.png  default.png
-```
-
-Los GIF se animan solos. Después: click derecho, **Recargar sprites**.
 
 ## Cómo funciona
 
 ```
 cmux events ──┐
-cmux rpc    ──┼──► PetController ──► droide + burbuja + panel
-zsh hooks   ──┤
+cmux rpc    ──┼──► PetController ──► estado (uno de seis) ──► pet pack
+zsh hooks   ──┤                                               arte + voz
 reloj       ──┘
 ```
 
-Cuatro fuentes, un orquestador, tres vistas. El detalle está en
-[`ARCHITECTURE.md`](ARCHITECTURE.md), y las decisiones con su evidencia en
-[`docs/adr/`](docs/adr/).
+Cuatro fuentes, un orquestador, un paquete que decide cómo se ve y cómo suena. El
+detalle está en [`ARCHITECTURE.md`](ARCHITECTURE.md), y las decisiones con su
+evidencia en [`docs/adr/`](docs/adr/).
 
-Una cosa que sorprende a todo el mundo: **cmux solo acepta control de procesos
-que descienden de cmux**, así que el asistente no puede arrancar desde launchd —
-el socket lo rechaza en silencio. Por eso arranca desde tu shell. Está contado en
+Una cosa que sorprende a todo el mundo: **cmux solo acepta control de procesos que
+descienden de cmux**, así que el asistente no puede arrancar desde launchd — el
+socket lo rechaza en silencio. Por eso arranca desde tu shell. Está contado en
 [`docs/adr/0001`](docs/adr/0001-arranque-por-shell-no-launchd.md).
 
 ## Contribuir
 
 ```bash
-make verify     # build + tests Swift + tests de hooks de zsh
+make verify     # build + tests Swift + hooks de zsh + instalador + integridad
 make render     # revisar el dibujo a ojo
 ```
 
@@ -154,6 +216,6 @@ Lee [`CONTRIBUTING.md`](CONTRIBUTING.md). Si vas a trabajar con un agente de IA,
 
 ## Licencia
 
-MIT. Ver [`LICENSE`](LICENSE).
+MIT. Ver [`LICENSE`](LICENSE). Cada mascota del marketplace declara la suya.
 
 cmux-pet no está afiliado a cmux ni a Lucasfilm.
