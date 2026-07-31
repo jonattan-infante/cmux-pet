@@ -87,12 +87,30 @@ BUILT="$(swift build -c release --show-bin-path)/cmux-pet"
 
 # ------------------------------------------------------------------ instalar
 
-mkdir -p "$PREFIX"/{bin,shell,sprites}
+mkdir -p "$PREFIX"/{bin,shell,pets,voices}
 pkill -f "$PREFIX/bin/cmux-pet" 2>/dev/null || true
 install -m 755 "$BUILT" "$PREFIX/bin/cmux-pet"
 install -m 644 shell/pet.zsh "$PREFIX/shell/pet.zsh"
-install -m 644 shell/sprites-README.txt "$PREFIX/sprites/LEEME.txt" 2>/dev/null || true
 info "instalado en $PREFIX/bin/cmux-pet"
+
+# Las mascotas que vienen con el repositorio. Se reemplazan siempre: son de
+# solo lectura para el usuario, sus frases generadas viven aparte en voices/.
+for pack in pets/*/; do
+  [[ -f "$pack/pet.json" ]] || continue
+  id="$(basename "$pack")"
+  rm -rf "$PREFIX/pets/$id"
+  cp -R "$pack" "$PREFIX/pets/$id"
+  info "mascota incluida: $id"
+done
+
+# Si no hay ninguna activa todavia, se activa la primera que haya.
+if ! grep -q '"activePet"[[:space:]]*:[[:space:]]*"' "$PREFIX/config.json" 2>/dev/null; then
+  first="$(ls "$PREFIX/pets" 2>/dev/null | head -1)"
+  if [[ -n "$first" ]]; then
+    "$PREFIX/bin/cmux-pet" use "$first" >/dev/null 2>&1 || true
+    info "mascota activa: $first"
+  fi
+fi
 
 # ------------------------------------------------------------- enganchar zsh
 
