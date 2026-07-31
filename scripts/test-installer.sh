@@ -11,6 +11,9 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 fail=0
+
+# md5 existe en macOS, md5sum en Linux: el script debe correr en cualquiera.
+hash_file() { md5 -q "$1" 2>/dev/null || md5sum "$1" | cut -d" " -f1; }
 check() {
   local desc="$1" expected="$2" actual="$3"
   if [[ "$expected" == "$actual" ]]; then
@@ -57,14 +60,14 @@ check "conserva los sprites del usuario" 1 "$(ls "$PREFIX/sprites" 2>/dev/null |
 check "conserva la configuracion" 1 "$(ls "$PREFIX/config.json" 2>/dev/null | wc -l | tr -d ' ')"
 
 # --- desinstalar dos veces no debe explotar ni corromper ---
-before="$(md5 -q "$WORK/.zshrc")"
+before="$(hash_file "$WORK/.zshrc")"
 ZDOTDIR="$WORK" CMUX_PET_PREFIX="$PREFIX" "$ROOT/install.sh" --uninstall >/dev/null 2>&1
-check "desinstalar dos veces es idempotente" "$before" "$(md5 -q "$WORK/.zshrc")"
+check "desinstalar dos veces es idempotente" "$before" "$(hash_file "$WORK/.zshrc")"
 
 # --- un zshrc sin el enganche no se toca ---
 echo 'export FOO=bar' > "$WORK/.zshrc"
-untouched="$(md5 -q "$WORK/.zshrc")"
+untouched="$(hash_file "$WORK/.zshrc")"
 ZDOTDIR="$WORK" CMUX_PET_PREFIX="$PREFIX" "$ROOT/install.sh" --uninstall >/dev/null 2>&1
-check "no toca un zshrc ajeno" "$untouched" "$(md5 -q "$WORK/.zshrc")"
+check "no toca un zshrc ajeno" "$untouched" "$(hash_file "$WORK/.zshrc")"
 
 exit $fail

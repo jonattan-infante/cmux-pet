@@ -106,11 +106,14 @@ else
 fi
 
 # --- caso 8: el autoarranque respeta CMUX_PET_NO_AUTOSTART ---
-before="$(pgrep -f 'cmux-pet/bin/cmux-pet' | wc -l | tr -d ' ')"
+# pgrep devuelve 1 cuando no hay coincidencias, y con pipefail eso mata el script.
+# En la maquina del autor el asistente corre; en CI no. El `|| true` cubre ambos.
+count_pets() { pgrep -f 'cmux-pet/bin/cmux-pet' 2>/dev/null | wc -l | tr -d ' ' || true; }
+before="$(count_pets)"
 run_zsh <<'EOS'
 true
 EOS
-after="$(pgrep -f 'cmux-pet/bin/cmux-pet' | wc -l | tr -d ' ')"
+after="$(count_pets)"
 check "no autoarranca si se desactiva" "$before" "$after"
 
 exit $fail
