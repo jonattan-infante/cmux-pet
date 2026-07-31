@@ -1,12 +1,21 @@
-// Voz generada por Claude Code local.
+// Voz de la mascota activa.
+//
+// Las frases no viven en el codigo: cada pack trae su personalidad en prosa
+// (persona.md) y sus frases de respaldo (phrases.json). Claude Code local
+// convierte esa personalidad en plantillas, que se guardan en
+// ~/.cmux-pet/voices/<id>.json.
+//
+// Ver docs/adr/0002 (por que plantillas y no mensajes) y
+// docs/adr/0005 (por que la personalidad vive en el pack).
 
 import Foundation
 
-final class Voice {
-    static let shared = Voice()
+public final class Voice {
+    public static let shared = Voice()
 
-    /// Marcadores obligatorios de cada clase de aviso.
-    static let kinds: [String: Set<String>] = [
+    /// Marcadores obligatorios de cada clase de aviso. Es el vocabulario que
+    /// comparten el generador, el validador y el formato de pack.
+    public static let kinds: [String: Set<String>] = [
         "agentDone":    ["agent", "where"],
         "commandDone":  ["cmd", "time", "where"],
         "commandError": ["cmd", "code", "where"],
@@ -17,47 +26,72 @@ final class Voice {
         "greeting":     [],
     ]
 
-    private var templates: [String: [String]] = [:]
+    /// Cuantas plantillas por clase se le piden al generador.
+    static let batchPerKind = 8
+
+    private var pack: PetPack?
+    private var generated: [String: [String]] = [:]
+    private var fallback: [String: [String]] = [:]
     private var lastPick: [String: Int] = [:]
     private var generating = false
-    private let url = petHome.appendingPathComponent("voice.json")
 
-    var isLoaded: Bool { !templates.isEmpty }
+    private var voiceURL: URL? {
+        pack.map { PetLibrary.voiceURL(for: $0.id) }
+    }
 
-    var ageInDays: Double? {
-        guard let attrs = try? fm.attributesOfItem(atPath: url.path),
+    public var isLoaded: Bool { !generated.isEmpty || !fallback.isEmpty }
+    public var hasGenerated: Bool { !generated.isEmpty }
+
+    public var ageInDays: Double? {
+        guard let url = voiceURL,
+              let attrs = try? fm.attributesOfItem(atPath: url.path),
               let d = attrs[.modificationDate] as? Date else { return nil }
         return Date().timeIntervalSince(d) / 86400
     }
 
-    func load() {
-        guard let data = try? Data(contentsOf: url),
-              let raw = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
-        else { return }
-        templates = Voice.validate(raw)
-        plog("voz cargada: \(templates.map { "\($0.key)=\($0.value.count)" }.sorted().joined(separator: " "))")
+    // MARK: activar una mascota
+
+    /// Cambia de mascota: carga su respaldo y sus frases generadas si las hay.
+    public func activate(_ pack: PetPack) {
+        self.pack = pack
+        lastPick = [:]
+        fallback = pack.fallbackPhrases
+        generated = [:]
+        if let url = voiceURL,
+           let data = try? Data(contentsOf: url),
+           let raw = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] {
+            generated = Voice.validate(raw)
+        }
+        plog("voz de \(pack.name): \(generated.count) clases generadas, \(fallback.count) de respaldo")
     }
 
-    /// Rellena una plantilla al azar. Devuelve nil si no hay ninguna usable, y
-    /// entonces manda la voz estatica de `Droid`.
-    func phrase(_ kind: String, _ vars: [String: String]) -> String? {
-        guard let options = templates[kind], !options.isEmpty else { return nil }
+    // MARK: usar
+
+    /// Rellena una plantilla. Lo generado gana; el respaldo del pack cubre los
+    /// huecos. Devuelve nil solo si la mascota no tiene nada para esa clase.
+    public func phrase(_ kind: String, _ vars: [String: String]) -> String? {
+        let options = generated[kind] ?? fallback[kind] ?? []
+        guard !options.isEmpty else { return nil }
+
         var i = Int.random(in: 0..<options.count)
         // No repetir la misma frase dos veces seguidas.
         if options.count > 1, let last = lastPick[kind], last == i {
             i = (i + 1) % options.count
         }
         lastPick[kind] = i
+
         var s = options[i]
         for (k, v) in vars {
             s = s.replacingOccurrences(of: "{\(k)}", with: v)
         }
-        // Un marcador sin dato deja hueco: mejor limpiarlo que mostrar "{time}".
         return s.replacingOccurrences(of: "  ", with: " ")
     }
 
-    /// Solo sobreviven las plantillas que usan todos sus marcadores y ninguno inventado.
-    static func validate(_ raw: [String: Any]) -> [String: [String]] {
+    // MARK: validar
+
+    /// Solo sobreviven las plantillas que usan todos sus marcadores y ninguno
+    /// inventado. Sin esto, una mascota podria mostrar "{time}" literal.
+    public static func validate(_ raw: [String: Any]) -> [String: [String]] {
         var out: [String: [String]] = [:]
         let allowed = Set(kinds.values.flatMap { $0 })
         for (kind, required) in kinds {
@@ -65,7 +99,6 @@ final class Voice {
             let good = list.filter { t in
                 guard t.count <= 220, !t.contains("\n") else { return false }
                 for r in required where !t.contains("{\(r)}") { return false }
-                // Marcadores inventados: cualquier {x} que no conozcamos.
                 var scan = Substring(t)
                 while let open = scan.firstIndex(of: "{") {
                     guard let close = scan[open...].firstIndex(of: "}") else { break }
@@ -80,9 +113,19 @@ final class Voice {
         return out
     }
 
+    /// Igual que `validate` pero reporta que clases se quedaron vacias. Lo usa
+    /// `cmux-pet validate` para explicar el problema en vez de callarlo.
+    public static func validateReporting(_ raw: [String: Any]) -> (ok: [String: [String]], empty: [String]) {
+        let ok = validate(raw)
+        let declared = kinds.keys.filter { raw[$0] != nil }
+        return (ok, declared.filter { ok[$0] == nil })
+    }
+
+    // MARK: generar
+
     /// El binario real de Claude Code, no el envoltorio de cmux: el envoltorio
     /// inyecta hooks y el asistente terminaria anunciando a su propio generador.
-    private static func claudeBinary() -> String? {
+    static func claudeBinary() -> String? {
         let candidates = [
             homeURL.appendingPathComponent(".local/bin/claude").path,
             "/opt/homebrew/bin/claude",
@@ -92,34 +135,41 @@ final class Voice {
         return candidates.first { fm.isExecutableFile(atPath: $0) }
     }
 
-    /// Pide un lote nuevo. Corre en segundo plano; si falla, no pasa nada:
-    /// se sigue usando lo que haya.
-    func regenerate(_ reason: String, done: ((Bool) -> Void)? = nil) {
+    /// Pide un lote nuevo para la mascota activa. Corre en segundo plano; si
+    /// falla, se sigue con lo que haya.
+    public func regenerate(_ reason: String, done: ((Bool, String) -> Void)? = nil) {
         guard !generating else { return }
+        guard let pack = pack, let persona = pack.persona, let url = voiceURL else {
+            done?(false, "no hay mascota activa")
+            return
+        }
         guard let bin = Voice.claudeBinary() else {
             plog("voz: no encuentro el binario de claude")
-            done?(false)
+            done?(false, "no encuentro el binario de claude; instala Claude Code")
             return
         }
         generating = true
-        plog("voz: generando frases nuevas (\(reason)) con \(bin)")
+        plog("voz: escribiendo frases para \(pack.name) (\(reason))")
+
+        let prompt = Voice.prompt(persona: persona, language: pack.language)
 
         DispatchQueue.global(qos: .background).async {
             let p = Process()
             p.executableURL = URL(fileURLWithPath: bin)
-            p.arguments = ["-p", "--model", "sonnet", "--output-format", "text", Voice.prompt]
+            p.arguments = ["-p", "--model", "sonnet", "--output-format", "text", prompt]
             let out = Pipe()
             p.standardOutput = out
             p.standardError = FileHandle.nullDevice
             p.standardInput = FileHandle.nullDevice   // sin esto espera stdin y avisa
 
             var ok = false
+            var detail = ""
             do {
                 try p.run()
                 // Perro guardian: una generacion no puede colgarse para siempre.
-                let deadline = DispatchTime.now() + 240
-                let q = DispatchQueue.global(qos: .background)
-                q.asyncAfter(deadline: deadline) { if p.isRunning { p.terminate() } }
+                DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 240) {
+                    if p.isRunning { p.terminate() }
+                }
 
                 let data = out.fileHandleForReading.readDataToEndOfFile()
                 p.waitUntilExit()
@@ -129,78 +179,88 @@ final class Voice {
                    let obj = (try? JSONSerialization.jsonObject(
                         with: Data(text[i...j].utf8))) as? [String: Any] {
                     let valid = Voice.validate(obj)
-                    // Exigir cobertura: media voz es peor que ninguna.
+                    // Cobertura completa: media voz es peor que ninguna. El
+                    // respaldo del pack cubre mientras tanto.
                     if valid.count == Voice.kinds.count,
                        valid.values.allSatisfy({ $0.count >= 3 }) {
                         try? JSONSerialization
                             .data(withJSONObject: obj, options: [.prettyPrinted])
-                            .write(to: self.url, options: .atomic)
-                        DispatchQueue.main.async { self.templates = valid }
-                        plog("voz: \(valid.values.reduce(0) { $0 + $1.count }) plantillas nuevas")
+                            .write(to: url, options: .atomic)
+                        let total = valid.values.reduce(0) { $0 + $1.count }
+                        DispatchQueue.main.async { self.generated = valid }
+                        plog("voz: \(total) plantillas nuevas para \(pack.id)")
+                        detail = "\(total) frases nuevas para \(pack.name)"
                         ok = true
                     } else {
-                        plog("voz: lote incompleto (\(valid.count)/\(Voice.kinds.count) clases), lo descarto")
+                        let faltan = Voice.kinds.keys.filter { valid[$0] == nil }.sorted()
+                        plog("voz: lote incompleto, faltan \(faltan.joined(separator: ", "))")
+                        detail = "el lote vino incompleto; sigo con las frases anteriores"
                     }
                 } else {
                     plog("voz: la respuesta no traia JSON usable")
+                    detail = "la respuesta no traía JSON usable"
                 }
             } catch {
                 plog("voz: no pude ejecutar claude: \(error)")
+                detail = "no pude ejecutar claude"
             }
 
             DispatchQueue.main.async {
                 self.generating = false
-                done?(ok)
+                done?(ok, detail)
             }
         }
     }
 
-    /// El guion. Vive aqui dentro para que el binario no dependa de archivos externos.
-    static let prompt = """
-    Eres el guionista de un asistente de escritorio con forma de droide \
-    astromecánico que vive flotando sobre la pantalla de un programador. \
-    Habla español neutro.
+    /// Compone el prompt: la personalidad la pone el pack, el contrato lo pone
+    /// el programa. Asi una mascota nueva no tiene que saber nada del formato.
+    public static func prompt(persona: String, language: String) -> String {
+        let idioma = language == "es" ? "español neutro" : "el idioma con código \"\(language)\""
+        return """
+        Eres el guionista de una mascota de escritorio que vive flotando sobre la \
+        pantalla de un programador y le avisa qué hacen sus agentes de IA y sus \
+        comandos.
 
-    Genera plantillas de frases para sus avisos. Devuelve SOLO un objeto JSON, \
-    sin texto alrededor y sin bloque de código.
+        ESTA ES LA PERSONALIDAD DE LA MASCOTA. Respétala en cada frase:
 
-    Claves obligatorias y sus marcadores permitidos (escríbelos EXACTAMENTE así):
+        \(persona)
 
-    - "agentDone":    {agent} {where}          el agente terminó su turno
-    - "commandDone":  {cmd} {time} {where}     un comando largo terminó bien
-    - "commandError": {cmd} {code} {where}     un comando falló
-    - "attention":    {agent} {what} {where}   el agente necesita al humano
-    - "working":      {agent} {doing} {time} {where}   reporte de avance
-    - "portUp":       {port} {where}           un puerto empezó a escuchar
-    - "portDown":     {port} {where}           un puerto se cerró
-    - "greeting":     (ninguno)                saludo al arrancar
+        Escribe en \(idioma).
 
-    Cada clave debe tener un arreglo de 8 plantillas distintas entre sí.
+        Genera plantillas de frases para sus avisos. Devuelve SOLO un objeto JSON, \
+        sin texto alrededor y sin bloque de código.
 
-    Qué contiene cada marcador:
-    - {agent} nombre propio: "Claude", "Codex".
-    - {cmd} un comando de shell: "./gradlew build".
-    - {time} una duración ya formateada: "1 min 34 s".
-    - {code} un número de exit code: "1".
-    - {port} un número de puerto: "3000".
-    - {doing} una frase con gerundio: "corriendo comandos", "editando archivos".
-    - {what} un sustantivo: "un permiso para usar Bash", "una pregunta".
-    - {where} YA TRAE la preposición incluida (" en Fineract") o viene vacío.
+        Claves obligatorias y sus marcadores permitidos (escríbelos EXACTAMENTE así):
 
-    Reglas estrictas:
-    1. Cada plantilla empieza con una onomatopeya de droide entre asteriscos, \
-    variada: *bip-bip*, *whirr*, *bzzzt*, *blip*, *dwoo-weep*, *clic-clic*, \
-    *brrrp*, *skreee*. Que combine con el tono: alegre al terminar, chirriante \
-    al fallar.
-    2. Una sola oración, o dos muy cortas. Máximo 110 caracteres sin contar marcadores.
-    3. Un solo párrafo. Sin saltos de línea. Sin listas.
-    4. CERO emojis. Solo texto.
-    5. Usa TODOS los marcadores de su clave, cada uno al menos una vez, tal cual.
-    6. No inventes marcadores nuevos.
-    7. Pega {where} directo después de una palabra, nunca escribas "en {where}".
-    8. Tono: servicial, seco, con carácter. Nunca sonar como un log de sistema. \
-    Humor leve de droide, sin chistes largos.
-    """
+        - "agentDone":    {agent} {where}          el agente terminó su turno
+        - "commandDone":  {cmd} {time} {where}     un comando largo terminó bien
+        - "commandError": {cmd} {code} {where}     un comando falló
+        - "attention":    {agent} {what} {where}   el agente necesita al humano
+        - "working":      {agent} {doing} {time} {where}   reporte de avance
+        - "portUp":       {port} {where}           un puerto empezó a escuchar
+        - "portDown":     {port} {where}           un puerto se cerró
+        - "greeting":     (ninguno)                saludo al arrancar
+
+        Cada clave debe tener un arreglo de \(batchPerKind) plantillas distintas entre sí.
+
+        Qué contiene cada marcador:
+        - {agent} nombre propio: "Claude", "Codex".
+        - {cmd} un comando de shell: "./gradlew build".
+        - {time} una duración ya formateada: "1 min 34 s".
+        - {code} un número de exit code: "1".
+        - {port} un número de puerto: "3000".
+        - {doing} una frase con gerundio: "corriendo comandos", "editando archivos".
+        - {what} un sustantivo: "un permiso para usar Bash", "una pregunta".
+        - {where} YA TRAE la preposición incluida (" en Fineract") o viene vacío.
+
+        Reglas estrictas:
+        1. Una sola oración, o dos muy cortas. Máximo 110 caracteres sin contar marcadores.
+        2. Un solo párrafo. Sin saltos de línea. Sin listas.
+        3. CERO emojis. Solo texto.
+        4. Usa TODOS los marcadores de su clave, cada uno al menos una vez, tal cual.
+        5. No inventes marcadores nuevos.
+        6. Pega {where} directo después de una palabra, nunca escribas "en {where}".
+        7. Nunca sonar como un log de sistema: la mascota tiene carácter.
+        """
+    }
 }
-
-/// Lo que sabemos de un agente vivo. Se arma con los hooks: el turno arranca con

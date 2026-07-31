@@ -1,5 +1,6 @@
-// Punto de entrada. Deliberadamente delgado: solo arranque, modo --render y
-// manejo de senales. Toda la logica vive en CmuxPetKit para que sea testeable.
+// Punto de entrada. Deliberadamente delgado: despacha subcomandos, modo
+// --render, y si no hay ninguno, arranca la mascota. Toda la logica vive en
+// CmuxPetKit para que sea testeable.
 
 import AppKit
 import CmuxPetKit
@@ -9,21 +10,34 @@ import Foundation
 var signalSources: [DispatchSourceSignal] = []
 
 PetPaths.ensureHome()
+PetLibrary.ensureDirs()
 
-// `cmux-pet --render <dir>` escribe un PNG por estado sin abrir ventana.
-// Es la forma de revisar el dibujo en CI o desde un agente.
-if let i = CommandLine.arguments.firstIndex(of: "--render") {
+let args = Array(CommandLine.arguments.dropFirst())
+
+if args.contains("--version") {
+    print("cmux-pet \(cmuxPetVersion)")
+    exit(0)
+}
+
+// `cmux-pet --render <dir>` escribe un PNG por estado sin abrir ventana. Es como
+// se revisa una mascota desde CI o desde un agente.
+if let i = args.firstIndex(of: "--render") {
     _ = NSApplication.shared
-    let out = i + 1 < CommandLine.arguments.count
-        ? URL(fileURLWithPath: CommandLine.arguments[i + 1])
+    let out = i + 1 < args.count
+        ? URL(fileURLWithPath: args[i + 1])
         : PetPaths.home.appendingPathComponent("render")
+    // El render usa la mascota activa: asi se revisa la que el usuario ve.
+    if let pack = PetLibrary.active(config: PetConfig.load()) {
+        PetTheme.shared.activate(pack)
+        Voice.shared.activate(pack)
+    }
     renderShowcase(to: out)
     exit(0)
 }
 
-if CommandLine.arguments.contains("--version") {
-    print("cmux-pet \(cmuxPetVersion)")
-    exit(0)
+// Subcomandos: list, use, install, new, validate, voice, search...
+if let code = PetCommands.run(args) {
+    exit(code)
 }
 
 takeOverPidFile()

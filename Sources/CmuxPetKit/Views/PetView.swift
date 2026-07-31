@@ -44,38 +44,29 @@ final class PetView: NSView {
         return bodyRect().insetBy(dx: -4, dy: -4).contains(p) ? self : nil
     }
 
-    // MARK: sprites propios
+    // MARK: sprites de la mascota activa
 
-    static let spriteDir = petHome.appendingPathComponent("sprites")
     private var spriteCache: [String: Sprite?] = [:]
     private var lastSpriteRect: CGRect?
 
-    /// Vuelve a mirar la carpeta de sprites. Se llama desde el menu.
+    /// Se llama al cambiar de mascota y desde el menu. Tira el cache: los
+    /// sprites de la mascota anterior no sirven para la nueva.
     func reloadSprites() {
         spriteCache.removeAll()
         lastSpriteRect = nil
         needsDisplay = true
     }
 
-    /// Busca `<estado>.<ext>` y cae a `default.<ext>`.
+    /// El sprite que declara el pack activo para ese estado. nil cuando la
+    /// mascota usa el renderer vectorial o no declaro imagen para el estado.
     private func sprite(for mood: Mood) -> Sprite? {
-        for key in [mood.rawValue, "default"] {
-            if let cached = spriteCache[key] {
-                if let s = cached { return s }
-                continue
-            }
-            var found: Sprite? = nil
-            for ext in ["gif", "png", "webp", "heic", "jpg", "jpeg", "tiff", "pdf"] {
-                let url = PetView.spriteDir.appendingPathComponent("\(key).\(ext)")
-                if fm.fileExists(atPath: url.path), let s = Sprite(url: url) {
-                    found = s
-                    break
-                }
-            }
-            spriteCache[key] = found
-            if let s = found { return s }
-        }
-        return nil
+        guard let url = PetTheme.shared.spriteURL(for: mood) else { return nil }
+        let key = url.path
+        if let cached = spriteCache[key] { return cached }
+        let loaded = Sprite(url: url)
+        if loaded == nil { plog("no pude cargar el sprite \(url.lastPathComponent)") }
+        spriteCache[key] = loaded
+        return loaded
     }
 
     /// Dibuja el sprite del estado actual. Devuelve false si no hay ninguno y

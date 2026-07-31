@@ -65,16 +65,35 @@ public final class PetController: NSObject, NSApplicationDelegate {
         startPolling()
         startNarration()
 
-        // Voz: usa lo guardado, y pide un lote nuevo si falta o ya envejeció.
-        Voice.shared.load()
-        let age = Voice.shared.ageInDays
-        if !Voice.shared.isLoaded {
-            Voice.shared.regenerate("primera vez")
-        } else if let d = age, d > 7 {
-            Voice.shared.regenerate("frases de hace \(Int(d)) días")
-        }
+        activateConfiguredPet()
 
         greet()
+    }
+
+    /// Pone en pie la mascota configurada: su tema para el dibujo y su voz para
+    /// los avisos. Si no hay ninguna instalada, lo dice en pantalla en vez de
+    /// quedarse muda y parecer que funciona.
+    func activateConfiguredPet() {
+        PetLibrary.ensureDirs()
+        guard let pack = PetLibrary.active(config: config) else {
+            plog("no hay ninguna mascota instalada")
+            show(Bubble(mood: .error,
+                        text: "No tengo ninguna mascota instalada. Corre: cmux-pet install astro",
+                        workspaceId: nil, sticky: true))
+            return
+        }
+        PetTheme.shared.activate(pack)
+        Voice.shared.activate(pack)
+        petView.reloadSprites()
+        plog("mascota activa: \(pack.name) (\(pack.id)) v\(pack.version), renderer \(pack.renderer.raw)")
+
+        // Sin frases generadas se usa el respaldo del pack; se piden en segundo
+        // plano para que la proxima vez suene distinto.
+        if !Voice.shared.hasGenerated {
+            Voice.shared.regenerate("primera vez para \(pack.id)")
+        } else if let d = Voice.shared.ageInDays, d > 7 {
+            Voice.shared.regenerate("frases de hace \(Int(d)) días")
+        }
     }
 
     func setupPanel() {
