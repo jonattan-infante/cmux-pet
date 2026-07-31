@@ -17,8 +17,9 @@ release: ## Compila optimizado
 test: ## Tests de la logica pura (Swift)
 	swift test
 
-test-shell: ## Tests de los hooks de zsh
+test-shell: ## Tests de los hooks de zsh y del instalador
 	./scripts/test-shell-hooks.sh
+	./scripts/test-installer.sh
 
 render: ## Dibuja cada estado a PNG en ./render para revisarlo a ojo
 	swift build && ./.build/debug/cmux-pet --render ./render
@@ -26,7 +27,7 @@ render: ## Dibuja cada estado a PNG en ./render para revisarlo a ojo
 
 verify: build test test-shell ## El gate completo: lo que CI corre
 	@echo ""
-	@echo "verificacion completa: build + $(shell swift test 2>&1 | grep -c 'passed (') tests + hooks de shell"
+	@echo "verificacion completa: compila, tests de logica, hooks de zsh e instalador"
 
 install: release ## Instala en ~/.cmux-pet y engancha el shell
 	./install.sh --from-source
