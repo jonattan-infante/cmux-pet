@@ -1,0 +1,18 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+*.xcodeproj
+
+# Salida del modo --render
+render/
+
+# macOS
+.DS_Store
+
+# Estado local del asistente: nunca va al repo
+config.json
+voice.json
+shell.jsonl
+pet.log
+pet.pid
