@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "pets": [
+    {
+      "id": "astro",
+      "name": "Astro",
+      "description": "Un droide astromecánico que reporta como una unidad de servicio.",
+      "author": "jonattan-infante",
+      "version": "1.0.0",
+      "language": "es",
+      "renderer": "vector:droid",
+      "source": "https://github.com/jonattan-infante/cmux-pet.git",
+      "path": "pets/astro",
+      "tags": ["droide", "vector", "sin-arte", "espanol"]
+    },
+    {
+      "id": "gatito",
+      "name": "Gatito",
+      "description": "Un gato de terminal: le da igual tu build, pero te avisa.",
+      "author": "jonattan-infante",
+      "version": "1.0.0",
+      "language": "es",
+      "renderer": "vector:droid",
+      "source": "https://github.com/jonattan-infante/cmux-pet.git",
+      "path": "pets/gatito",
+      "tags": ["gato", "vector", "sin-arte", "espanol", "indiferente"]
+    }
+  ]
+}
