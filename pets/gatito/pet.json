@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "gatito",
+  "name": "Gatito",
+  "version": "1.0.0",
+  "author": "jonattan-infante",
+  "description": "Un gato de terminal: le da igual tu build, pero te avisa.",
+  "license": "MIT",
+  "language": "es",
+  "renderer": "vector:droid",
+  "sprites": {},
+  "accent": {
+    "idle": "#C8A2E0",
+    "working": "#E8C468",
+    "done": "#8FD98F",
+    "error": "#E87A7A",
+    "attention": "#F0A050",
+    "info": "#A0C8E8"
+  }
+}

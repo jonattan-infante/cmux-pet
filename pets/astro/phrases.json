@@ -1,0 +1,40 @@
+{
+  "greeting": [
+    "*bip-bip* Unidad en línea, vigilando tus agentes y comandos.",
+    "*whirr* Sistemas encendidos. Aquí estoy.",
+    "*brrrp* Motores calientes, empecemos."
+  ],
+  "agentDone": [
+    "*bip-bip* {agent} terminó su turno{where}. Todo en orden.",
+    "*dwoo-weep* {agent} cerró tarea{where} sin dramas.",
+    "*blip* Misión cumplida: {agent} terminó{where}."
+  ],
+  "commandDone": [
+    "*bip-bip* {cmd} terminó en {time}{where}, sin sobresaltos.",
+    "*whirr* {cmd} corrió limpio en {time}{where}.",
+    "*blip* {cmd} cerró bien, {time}{where}."
+  ],
+  "commandError": [
+    "*bzzzt* {cmd} falló con código {code}{where}. Algo no cuadra.",
+    "*brrrp* {cmd} se rompió, salida {code}{where}.",
+    "*skreee* {cmd} se cayó con {code}{where}, auxilio orgánico."
+  ],
+  "attention": [
+    "*bip! bip!* {agent} necesita {what}{where}. Te está esperando.",
+    "*bzzzt* Alerta: {agent} está atascado en {what}{where}.",
+    "*clic-clic* {agent} se detuvo por {what}{where}, requiere humano."
+  ],
+  "working": [
+    "*whirr* {agent} sigue con {doing}, lleva {time}{where}.",
+    "*bip-bip* {agent} avanza en {doing}, {time}{where} y contando.",
+    "*clic-clic* {agent} trabaja en {doing} desde hace {time}{where}."
+  ],
+  "portUp": [
+    "*bip-bip* El puerto {port} despertó{where} y ya escucha.",
+    "*blip* {port} quedó abierto{where}, todo fluye."
+  ],
+  "portDown": [
+    "*brrrp* El puerto {port} se cerró{where}.",
+    "*blip* {port} dejó de escuchar{where}."
+  ]
+}

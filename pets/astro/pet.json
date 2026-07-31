@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "astro",
+  "name": "Astro",
+  "version": "1.0.0",
+  "author": "jonattan-infante",
+  "description": "Un droide astromecánico que reporta como una unidad de servicio.",
+  "license": "MIT",
+  "language": "es",
+  "renderer": "vector:droid",
+  "sprites": {},
+  "accent": {
+    "idle": "#6B9EFA",
+    "working": "#FAB83D",
+    "done": "#4CCC80",
+    "error": "#F05C5C",
+    "attention": "#FA8C33",
+    "info": "#8C99FA"
+  }
+}

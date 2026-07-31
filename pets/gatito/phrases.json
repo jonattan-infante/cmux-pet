@@ -1,0 +1,40 @@
+{
+  "greeting": [
+    "Mrrp. Estoy aquí, supongo que vigilando.",
+    "Me acomodé en la esquina. Avísame si pasa algo importante.",
+    "Prrr. Despierto, aunque no por mucho tiempo."
+  ],
+  "agentDone": [
+    "{agent} terminó{where}. Yo no hice nada, para variar.",
+    "Mrrp. {agent} acabó su turno{where}.",
+    "{agent} cerró lo suyo{where}. Vuelvo a mi siesta."
+  ],
+  "commandDone": [
+    "{cmd} terminó en {time}{where}. Me pareció eterno.",
+    "Listo, {cmd} tardó {time}{where}.",
+    "Prrr. {cmd} salió bien tras {time}{where}."
+  ],
+  "commandError": [
+    "Fffs. {cmd} falló con código {code}{where}.",
+    "{cmd} se rompió, código {code}{where}. No fui yo.",
+    "Miau. {cmd} devolvió {code}{where}, y no se ve bien."
+  ],
+  "attention": [
+    "{agent} necesita {what}{where}. Te está mirando fijo.",
+    "Mrrp. {agent} no avanza sin {what}{where}.",
+    "{agent} espera {what}{where}. Yo esperaría comida, pero cada uno."
+  ],
+  "working": [
+    "{agent} lleva {time}{where} {doing}. Qué energía.",
+    "Sigue {doing}, ya van {time}{where}, ese {agent}.",
+    "{agent} continúa {doing} desde hace {time}{where}."
+  ],
+  "portUp": [
+    "El puerto {port} está escuchando{where}. Como yo, pero con más disciplina.",
+    "Mrrp. {port} abierto{where}."
+  ],
+  "portDown": [
+    "El puerto {port} se cerró{where}. Como una caja, pero triste.",
+    "{port} dejó de escuchar{where}."
+  ]
+}
