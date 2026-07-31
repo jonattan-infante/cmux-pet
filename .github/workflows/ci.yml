@@ -1,0 +1,46 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    # AppKit y el toolchain de Swift para macOS 13+: hace falta un runner de macOS.
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Versiones
+        run: |
+          swift --version
+          sw_vers
+
+      - name: Compilar
+        run: swift build
+
+      - name: Tests de logica pura
+        run: swift test
+
+      # Los hooks corren dentro de zsh, que viene en el runner. Este es el unico
+      # codigo que se ejecuta en el shell del usuario, asi que se prueba aparte.
+      - name: Tests de los hooks de zsh
+        run: ./scripts/test-shell-hooks.sh
+
+      - name: Compilar optimizado
+        run: swift build -c release
+
+      - name: El binario responde
+        run: ./$(swift build -c release --show-bin-path | sed "s|$PWD/||")/cmux-pet --version
+
+      # `make render` NO esta en el gate: dibuja con AppKit y necesita una sesion
+      # grafica que el runner no garantiza. La revision visual es manual, con el
+      # agente pet-visual-checker (ver AGENTS.md).
+      - name: Sintaxis de los scripts
+        run: |
+          bash -n install.sh
+          bash -n scripts/test-shell-hooks.sh
+          zsh -n shell/pet.zsh
