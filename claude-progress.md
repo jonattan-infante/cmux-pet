@@ -15,10 +15,11 @@ y cómo habla. El marketplace es un JSON en el repo, sin servidor.
 Baseline verde, verificado con comandos:
 
 ```
-make verify                       -> compila + 52 tests + 8 hooks + 12 instalador + 13 integridad
+make verify                       -> compila + 52 tests + 8 hooks + 12 instalador + 13 integridad + 7 mascotas
 ./.build/debug/cmux-pet --version -> cmux-pet 0.1.0
 make render                       -> 15 PNG en ./render
 ./install.sh --from-source        -> instalado y corriendo en la maquina del autor
+CI                                -> 5 jobs verdes, incluida la validacion del marketplace
 ```
 
 El asistente que corre en la máquina del autor es **el binario que produce este
