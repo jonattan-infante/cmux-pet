@@ -61,6 +61,28 @@ violan por accidente:
 
 Cada uno tiene su ADR con la evidencia de por qué.
 
+## El flujo: todo pasa por un PR
+
+`main` está protegido. No se puede empujar directo, ni siquiera el dueño: los
+cuatro checks tienen que estar en verde y el cambio tiene que venir de un PR.
+
+```bash
+git checkout -b fix/mi-arreglo
+# trabajar
+make verify                      # antes de empujar, no después
+git push -u origin fix/mi-arreglo
+gh pr create --fill
+gh pr merge --auto --squash      # se mergea solo cuando CI pase
+```
+
+No hace falta que nadie apruebe: el PR existe para que CI opine antes de que el
+cambio entre, no para pedir permiso. Los merges son squash y la rama se borra
+sola.
+
+Si CI falla y necesitas hacer un hotfix urgente, la protección se puede levantar
+un momento desde Settings > Branches. Es la salida de emergencia; volver a
+activarla después.
+
 ## Commits y ramas
 
 Conventional Commits, imperativo y minúsculas:

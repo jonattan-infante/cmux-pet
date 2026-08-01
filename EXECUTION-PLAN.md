@@ -16,6 +16,7 @@ estado es "por verificar".
 | P0.3b | Tests del instalador | verde | `./scripts/test-installer.sh` → 12 ok, salida 0 |
 | P0.3c | Integridad del repo | verde | `./scripts/test-repo-integrity.sh` → 13 ok, salida 0 |
 | P0.3d | Mascotas y marketplace | verde | `./scripts/test-pet-packs.sh` → 7 ok, salida 0. Probado que detecta: pack roto, versión desincronizada e id duplicado |
+| P0.8 | `main` protegido | verde | push directo → `remote rejected (protected branch hook declined)`, verificado con `enforce_admins: true` |
 | P0.7 | CI en GitHub Actions | verde | 5 jobs en verde el 2026-07-31: build en macos-14 y macos-15, shell, mascotas, vista previa |
 | P0.4 | El binario arranca y responde | verde | `./.build/debug/cmux-pet --version` → `cmux-pet 0.1.0` |
 | P0.5 | El dibujo se puede revisar sin pantalla | verde | `make render` → 6 PNG de estado + `todos.png` + `panel.png` |
@@ -53,7 +54,7 @@ estado es "por verificar".
 |---|---|---|---|
 | F1 | Mascotas con arte propio | el renderer `sprites` funciona, pero ningún pack incluido lo usa | hacer un pack de ejemplo con sprites, aunque sean formas simples, para que se vea el camino |
 | F2 | Más renderers integrados | solo hay `vector:droid` | un pack sin arte solo puede verse como droide; ver B10 |
-| F3 | Proteger `main` con los checks | sin configurar | decisión del dueño: obligaría a que todo pase por PR o al menos por CI verde |
+
 
 ## Riesgos
 

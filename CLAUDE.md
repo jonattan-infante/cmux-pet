@@ -113,6 +113,9 @@ que un pack está bien.
 
 ## Convenciones
 
+- **`main` está protegido**: nada entra sin PR y sin los cuatro checks en verde.
+  Ni el dueño puede empujar directo. Flujo: rama, `make verify`, `gh pr create`,
+  `gh pr merge --auto --squash`.
 - Commits: Conventional Commits, imperativo y minúsculas
   (`feat(packs): validar rutas de sprites`).
 - Ramas: `<tipo>/<descripcion-corta-en-kebab>`.
