@@ -1,5 +1,7 @@
 # cmux-pet
 
+[![verify](https://github.com/jonattan-infante/cmux-pet/actions/workflows/ci.yml/badge.svg)](https://github.com/jonattan-infante/cmux-pet/actions/workflows/ci.yml)
+
 Una mascota flotante que te cuenta qué están haciendo tus agentes de IA en
 [cmux](https://cmux.com). **Elige la tuya, o hazla.**
 
@@ -207,8 +209,9 @@ socket lo rechaza en silencio. Por eso arranca desde tu shell. Está contado en
 ## Contribuir
 
 ```bash
-make verify     # build + tests Swift + hooks de zsh + instalador + integridad
-make render     # revisar el dibujo a ojo
+make verify        # el gate completo: lo mismo que corre CI
+make packs         # solo validar las mascotas y el índice
+make render        # revisar el dibujo a ojo
 ```
 
 Lee [`CONTRIBUTING.md`](CONTRIBUTING.md). Si vas a trabajar con un agente de IA,

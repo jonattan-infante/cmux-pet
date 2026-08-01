@@ -11,8 +11,19 @@ make run         # arranca en primer plano, Ctrl-C para salir
 
 ## El gate
 
-`make verify` es el juez: compila, corre los tests de Swift y los de los hooks de
-zsh. Si pasa, tu cambio es candidato. Si no pasa, no existe.
+`make verify` es el juez: compila, corre los tests de Swift, los de los hooks de
+zsh, los del instalador, la integridad del repo y la validación de las mascotas.
+Es exactamente lo que corre CI. Si pasa, tu cambio es candidato; si no pasa, no
+existe.
+
+En GitHub son cuatro jobs, para que se lea de un vistazo qué falló:
+
+| Job | Qué cubre |
+|---|---|
+| `build y tests` | compila y tests de lógica, en macOS 14 y 15 |
+| `shell e instalador` | hooks de zsh, instalación y desinstalación, integridad del repo |
+| `mascotas y marketplace` | valida cada pet pack y el índice, clonando incluso los de terceros |
+| `vista previa` | dibuja los estados y los sube como artefacto; no bloquea |
 
 ```bash
 make verify

@@ -3,7 +3,7 @@ SHELL := /bin/bash
 PREFIX ?= $(HOME)/.cmux-pet
 BIN := $(PREFIX)/bin/cmux-pet
 
-.PHONY: help build release test test-shell render verify install uninstall run stop restart log clean fmt
+.PHONY: help build release test test-shell packs packs-remote render verify install uninstall run stop restart log clean fmt
 
 help: ## Muestra estos comandos
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "};{printf "  \033[1m%-12s\033[0m %s\n",$$1,$$2}'
@@ -17,10 +17,17 @@ release: ## Compila optimizado
 test: ## Tests de la logica pura (Swift)
 	swift test
 
-test-shell: ## Tests de shell, instalador e integridad del repo
+test-shell: ## Tests de shell, instalador, integridad y mascotas
 	./scripts/test-shell-hooks.sh
 	./scripts/test-installer.sh
 	./scripts/test-repo-integrity.sh
+	./scripts/test-pet-packs.sh
+
+packs: ## Valida las mascotas del repo y el indice del marketplace
+	./scripts/test-pet-packs.sh
+
+packs-remote: ## Igual, pero tambien clona y valida las mascotas de terceros
+	./scripts/test-pet-packs.sh --remote
 
 render: ## Dibuja cada estado a PNG en ./render para revisarlo a ojo
 	swift build && ./.build/debug/cmux-pet --render ./render
@@ -28,7 +35,8 @@ render: ## Dibuja cada estado a PNG en ./render para revisarlo a ojo
 
 verify: build test test-shell ## El gate completo: lo que CI corre
 	@echo ""
-	@echo "verificacion completa: compila, tests de logica, hooks de zsh, instalador e integridad"
+	@echo "verificacion completa: compila, tests de logica, hooks de zsh,"
+	@echo "instalador, integridad del repo y mascotas del marketplace"
 
 install: release ## Instala en ~/.cmux-pet y engancha el shell
 	./install.sh --from-source

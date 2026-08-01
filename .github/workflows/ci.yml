@@ -6,10 +6,26 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Solo lectura: nada de este workflow escribe en el repositorio.
+permissions:
+  contents: read
+
+# Un push nuevo al mismo PR cancela la corrida anterior: no tiene sentido pagar
+# runners de macOS por un commit que ya quedo atras.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  verify:
-    # AppKit y el toolchain de Swift para macOS 13+: hace falta un runner de macOS.
-    runs-on: macos-14
+  # Compilar y tests de logica pura. En matriz porque el proyecto declara
+  # macOS 13+ y una diferencia de SDK ya nos costo una corrida roja.
+  build:
+    name: build y tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15]
 
     steps:
       - uses: actions/checkout@v4
@@ -25,25 +41,72 @@ jobs:
       - name: Tests de logica pura
         run: swift test
 
-      # Los hooks corren dentro de zsh, que viene en el runner. Este es el unico
-      # codigo que se ejecuta en el shell del usuario, asi que se prueba aparte.
-      - name: Tests de los hooks de zsh y del instalador
-        run: |
-          ./scripts/test-shell-hooks.sh
-          ./scripts/test-installer.sh
-          ./scripts/test-repo-integrity.sh
-
       - name: Compilar optimizado
         run: swift build -c release
 
       - name: El binario responde
         run: ./$(swift build -c release --show-bin-path | sed "s|$PWD/||")/cmux-pet --version
 
-      # `make render` NO esta en el gate: dibuja con AppKit y necesita una sesion
-      # grafica que el runner no garantiza. La revision visual es manual, con el
-      # agente pet-visual-checker (ver AGENTS.md).
+  # Lo que corre en el shell del usuario y lo que toca su disco. Job aparte
+  # porque cuando falla, falla por razones distintas al codigo Swift.
+  shell:
+    name: shell e instalador
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Sintaxis de los scripts
         run: |
           bash -n install.sh
-          bash -n scripts/test-shell-hooks.sh
+          for f in scripts/*.sh; do bash -n "$f"; done
           zsh -n shell/pet.zsh
+
+      - name: Hooks de zsh
+        run: ./scripts/test-shell-hooks.sh
+
+      - name: Instalador y desinstalador
+        run: ./scripts/test-installer.sh
+
+      - name: Integridad del repositorio
+        run: ./scripts/test-repo-integrity.sh
+
+  # La revision automatica de un PR al marketplace. Valida las mascotas de este
+  # repo y ademas clona y valida las que viven en repositorios de terceros: una
+  # entrada que apunte a un paquete roto rompe `cmux-pet install` para todos.
+  packs:
+    name: mascotas y marketplace
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compilar el validador
+        run: swift build
+
+      - name: Validar mascotas e indice
+        run: ./scripts/test-pet-packs.sh --remote
+
+  # `make render` no entra al gate de correctitud: dibuja con AppKit y la
+  # revision es a ojo. Pero que no explote si se puede comprobar, y las imagenes
+  # quedan como artefacto para revisar una mascota nueva sin instalarla.
+  render:
+    name: vista previa
+    runs-on: macos-14
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dibujar los estados
+        run: |
+          swift build
+          ./.build/debug/cmux-pet --render ./render
+          ls -la render/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vista-previa
+          path: render/
+          retention-days: 7
+          if-no-files-found: warn
