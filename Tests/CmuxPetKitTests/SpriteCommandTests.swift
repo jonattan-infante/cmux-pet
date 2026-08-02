@@ -112,7 +112,7 @@ final class SpriteCommandTests: XCTestCase {
         XCTAssertEqual(PetCommands.clearSprites(try loadPack()), 0)
 
         let updated = try loadPack()
-        XCTAssertEqual(updated.renderer, .vectorDroid)
+        XCTAssertEqual(updated.renderer, .vector("vector:droid"))
         XCTAssertTrue(updated.spritePaths.isEmpty)
         // Las imagenes no se borran: quitarlas del manifiesto no es tirarlas.
         XCTAssertTrue(FileManager.default.fileExists(
@@ -124,12 +124,12 @@ final class SpriteCommandTests: XCTestCase {
     func testRechazaEstadoDesconocido() throws {
         let png = try makePNG("origen.png")
         XCTAssertEqual(PetCommands.setSprite(try loadPack(), state: "contento", file: png.path), 2)
-        XCTAssertEqual(try loadPack().renderer, .vectorDroid, "no debio tocar el manifiesto")
+        XCTAssertEqual(try loadPack().renderer, .vector("vector:droid"), "no debio tocar el manifiesto")
     }
 
     func testRechazaArchivoInexistente() throws {
         XCTAssertEqual(PetCommands.setSprite(try loadPack(), state: "idle", file: "/no/existe.png"), 1)
-        XCTAssertEqual(try loadPack().renderer, .vectorDroid)
+        XCTAssertEqual(try loadPack().renderer, .vector("vector:droid"))
     }
 
     func testRechazaFormatoNoSoportado() throws {
@@ -144,7 +144,7 @@ final class SpriteCommandTests: XCTestCase {
         let fake = dir.appendingPathComponent("mentira.png")
         try Data("esto no es un png".utf8).write(to: fake)
         XCTAssertEqual(PetCommands.setSprite(try loadPack(), state: "idle", file: fake.path), 1)
-        XCTAssertEqual(try loadPack().renderer, .vectorDroid)
+        XCTAssertEqual(try loadPack().renderer, .vector("vector:droid"))
     }
 
     // MARK: reversion
@@ -186,6 +186,6 @@ final class SpriteCommandTests: XCTestCase {
             XCTFail("no deberia reportar exito")
         }
         XCTAssertEqual(code, 1)
-        XCTAssertEqual(try loadPack().renderer, .vectorDroid)
+        XCTAssertEqual(try loadPack().renderer, .vector("vector:droid"))
     }
 }

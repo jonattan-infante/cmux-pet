@@ -117,8 +117,20 @@ cmux-pet sprite mi-gato --dir ./mis-dibujos
 cmux-pet use mi-gato
 ```
 
-Sin arte, se usa el droide vectorial integrado tintado con tus colores; no pesa
-nada y no involucra arte de nadie.
+### Sin arte propio
+
+Hay tres dibujos integrados que se tiñen con tus colores. No pesan nada y no
+involucran arte de nadie:
+
+| `renderer` | Qué dibuja |
+|---|---|
+| `vector:droid` | droide astromecánico: cúpula con lente, torso, tres patas |
+| `vector:ball` | droide esférico: cuerpo bola que rueda, cúpula y antena |
+| `vector:sage` | figura encapuchada: túnica, ojos en la sombra, bastón |
+
+```bash
+cmux-pet renderers    # verlos con su descripción
+```
 
 El formato completo está en [`docs/reference/pet-pack.md`](docs/reference/pet-pack.md).
 

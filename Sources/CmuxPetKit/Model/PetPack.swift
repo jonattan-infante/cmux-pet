@@ -6,24 +6,26 @@ import Foundation
 
 /// Cómo se dibuja una mascota.
 public enum PetRendererKind: Equatable {
-    /// El droide astromecánico integrado, tintado con los colores del pack.
-    case vectorDroid
+    /// Uno de los dibujos integrados, tintado con los colores del pack.
+    case vector(String)
     /// Las imágenes del propio pack.
     case sprites
     /// Declarado en el manifiesto pero desconocido para esta versión.
     case unknown(String)
 
     init(raw: String) {
-        switch raw {
-        case "vector:droid": self = .vectorDroid
-        case "sprites":      self = .sprites
-        default:             self = .unknown(raw)
+        if raw == "sprites" {
+            self = .sprites
+        } else if VectorRenderers.named(raw) != nil {
+            self = .vector(raw)
+        } else {
+            self = .unknown(raw)
         }
     }
 
     public var raw: String {
         switch self {
-        case .vectorDroid:      return "vector:droid"
+        case .vector(let id):   return id
         case .sprites:          return "sprites"
         case .unknown(let s):   return s
         }

@@ -24,6 +24,7 @@ public enum PetCommands {
         case "new", "create":    return scaffold(rest)
         case "sprite", "image":  return sprite(rest)
         case "fork", "copy":     return fork(rest)
+        case "renderers":        return renderers()
         case "validate", "check":return validate(rest)
         case "voice":            return voice(rest)
         case "search":           return search(rest)
@@ -72,6 +73,7 @@ public enum PetCommands {
           sprite <id> <estado> <archivo>  ponle una imagen a un estado
           sprite <id> --dir <carpeta>     varias a la vez, por nombre de archivo
           sprite <id> --clear             vuelve al dibujo vectorial
+          renderers                       dibujos integrados disponibles
           validate <ruta>                 revisa un paquete y explica cada fallo
           voice [<id>]                    reescribe sus frases con Claude Code
 
@@ -342,6 +344,24 @@ public enum PetCommands {
         out("  5. cmux-pet voice \(id)      " + dim("Claude Code le escribe las frases"))
         out("")
         out(dim("  Publicar en el marketplace: docs/marketplace.md"))
+        return 0
+    }
+
+    // MARK: renderers
+
+    /// Los dibujos integrados. Se listan desde el registro para que agregar uno
+    /// no obligue a actualizar la ayuda a mano.
+    static func renderers() -> Int32 {
+        out(bold("Dibujos integrados"))
+        for r in VectorRenderers.all {
+            out("  \(r.id.padding(toLength: 16, withPad: " ", startingAt: 0))\(r.title)")
+            out("  \(dim("                \(r.summary)"))")
+        }
+        out("")
+        out("  \(("sprites").padding(toLength: 16, withPad: " ", startingAt: 0))Tus propias imágenes")
+        out("  \(dim("                cmux-pet sprite <id> <estado> <archivo>"))")
+        out("")
+        out(dim("  Se declara en pet.json, campo \"renderer\"."))
         return 0
     }
 

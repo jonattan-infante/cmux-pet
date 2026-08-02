@@ -67,10 +67,19 @@ Nada más es necesario. Un pack mínimo válido son dos archivos: `pet.json` y
 
 ### Renderers
 
-| Valor | Qué hace | Cuándo usarlo |
+| Valor | Qué dibuja | Cuándo usarlo |
 |---|---|---|
-| `vector:droid` | dibuja el droide astromecánico integrado con Core Graphics, tintado con tus `accent` | quieres una mascota sin arte propio; pesa cero |
-| `sprites` | muestra tus imágenes | tienes arte propio |
+| `vector:droid` | droide astromecánico: cúpula con lente, torso con paneles, tres patas | voz de máquina de servicio |
+| `vector:ball` | droide esférico: cuerpo bola que rueda, cúpula con lente y antena | voz ágil o juguetona |
+| `vector:sage` | figura encapuchada: túnica, ojos en la sombra, bastón | voz tranquila o sentenciosa |
+| `sprites` | tus propias imágenes | tienes arte propio |
+
+Los tres vectoriales se dibujan con Core Graphics y se tiñen con tus `accent`:
+no pesan nada y no involucran arte de nadie. Para verlos:
+
+```bash
+cmux-pet renderers
+```
 
 Con `sprites`, los formatos aceptados son `gif` (se anima solo), `png`, `webp`,
 `heic`, `jpg`, `tiff` y `pdf`. Fondo transparente, 150 px o más de lado.

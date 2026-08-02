@@ -61,7 +61,7 @@ final class PetPackTests: XCTestCase {
             return XCTFail("deberia cargar: \(String(describing: loadError()))")
         }
         XCTAssertEqual(p.id, "prueba")
-        XCTAssertEqual(p.renderer, .vectorDroid)
+        XCTAssertEqual(p.renderer, .vector("vector:droid"))
         XCTAssertEqual(p.license, "unlicensed", "sin declarar, la licencia es explicita")
         XCTAssertEqual(p.language, "es")
     }
