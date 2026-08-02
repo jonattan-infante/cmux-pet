@@ -35,6 +35,8 @@ cmux-pet use <id>                 # cambiar de mascota
 cmux-pet search [texto]           # buscar en el marketplace
 cmux-pet install <id|url|ruta>    # instalar; --use la activa, --force reemplaza
 cmux-pet new <id> [--sprites]     # crear un paquete nuevo, ya válido
+cmux-pet fork <origen> <nuevo>    # copia editable de una mascota existente
+cmux-pet sprite <id> <estado> <f> # ponerle imagen; --dir <carpeta>, --clear
 cmux-pet validate <ruta>          # revisar un paquete y explicar cada fallo
 cmux-pet voice [<id>]             # que Claude Code le escriba las frases
 cmux-pet info <id>
@@ -50,34 +52,37 @@ cmux-pet uninstall <id>
    usar uno nuevo. Ver `docs/adr/0005`.
 2. **`PetPack.load` es la frontera del sistema.** Lo escribe un tercero: nada de
    rutas con `..`, colores sin validar ni sprites que no existan.
-3. **Las frases generadas van a `~/.cmux-pet/voices/<id>.json`, nunca dentro del
+3. **Nunca editar un pack marcado `.bundled`.** Se reemplaza al actualizar y el
+   trabajo del usuario se perdería sin aviso: primero `fork`. Todo cambio al
+   manifiesto se revalida y se revierte si dejaría el paquete inválido.
+4. **Las frases generadas van a `~/.cmux-pet/voices/<id>.json`, nunca dentro del
    pack.** Actualizar un pack no puede borrarlas.
-4. **El prompt se compone**: personalidad del pack + contrato del programa. No
+5. **El prompt se compone**: personalidad del pack + contrato del programa. No
    meter personalidad en el código ni contrato en el pack.
-5. **Toda mascota tiene respaldo.** `phrases.json` o las frases de `Scaffold`. La
+6. **Toda mascota tiene respaldo.** `phrases.json` o las frases de `Scaffold`. La
    mascota no puede quedar muda.
-6. **Nunca `boundingRect` + `draw(with:)` en la misma vista.** Divergen y cortan
+7. **Nunca `boundingRect` + `draw(with:)` en la misma vista.** Divergen y cortan
    texto. Usar `layoutText(...)`. Ver `docs/adr/0003`.
-7. **Nunca suprimir avisos por workspace.** Solo por pane exacto. Ver `docs/adr/0004`.
-8. **Nunca llamar a un modelo en el camino de un aviso.** Ver `docs/adr/0002`.
-9. **Nunca asumir que el texto de una notificación viene en el evento.** Llega
+8. **Nunca suprimir avisos por workspace.** Solo por pane exacto. Ver `docs/adr/0004`.
+9. **Nunca llamar a un modelo en el camino de un aviso.** Ver `docs/adr/0002`.
+10. **Nunca asumir que el texto de una notificación viene en el evento.** Llega
    redactado; se pide por `cmux rpc notification.list`.
-10. **Nunca usar `tool_input` de los hooks.** Viene redactado. Solo hay `tool_name`.
-11. **Nunca invocar el `claude` del PATH para generar la voz.** Es el envoltorio
+11. **Nunca usar `tool_input` de los hooks.** Viene redactado. Solo hay `tool_name`.
+12. **Nunca invocar el `claude` del PATH para generar la voz.** Es el envoltorio
     de cmux e inyecta hooks: la mascota se anunciaría a sí misma en bucle. Usar el
     binario real y filtrar eventos por `_ppid`.
-12. **Nunca depender de launchd para el arranque.** El socket de cmux rechaza
+13. **Nunca depender de launchd para el arranque.** El socket de cmux rechaza
     procesos que no descienden de cmux. Ver `docs/adr/0001`.
-13. **Nunca bloquear el hilo principal con `cmuxJSON`.** Es sincrónico: va en
+14. **Nunca bloquear el hilo principal con `cmuxJSON`.** Es sincrónico: va en
     `DispatchQueue.global`.
-14. **Nunca escribir al disco del usuario desde el repo.** Todo el estado vive en
+15. **Nunca escribir al disco del usuario desde el repo.** Todo el estado vive en
     `~/.cmux-pet`.
-15. **Nunca dejar que un fallo sea silencioso.** Sin mascota instalada, sin socket
+16. **Nunca dejar que un fallo sea silencioso.** Sin mascota instalada, sin socket
     o sin frases, se dice en pantalla.
-16. **Nunca arte de personajes con dueño**, ni en los packs incluidos ni aceptado
+17. **Nunca arte de personajes con dueño**, ni en los packs incluidos ni aceptado
     en el marketplace.
-17. **Cero emojis** en código, mensajes, commits y documentación.
-18. **Nunca crear carpetas de feature vacías** por simetría con la plantilla.
+18. **Cero emojis** en código, mensajes, commits y documentación.
+19. **Nunca crear carpetas de feature vacías** por simetría con la plantilla.
 
 ## Verificar en vez de recordar
 
@@ -113,9 +118,12 @@ que un pack está bien.
 
 ## Convenciones
 
+- **Este repo es personal: siempre la cuenta `jonattan-infante`.** La cuenta
+  activa de `gh` es estado global que otra sesión voltea, así que no se confía en
+  ella: usar `make pr` y `make merge`, que piden el token de esa cuenta
+  explícitamente. El remote ya está pinneado a `github-personal`.
 - **`main` está protegido**: nada entra sin PR y sin los cuatro checks en verde.
-  Ni el dueño puede empujar directo. Flujo: rama, `make verify`, `gh pr create`,
-  `gh pr merge --auto --squash`.
+  Ni el dueño puede empujar directo. Flujo: rama, `make pr`, `make merge`.
 - Commits: Conventional Commits, imperativo y minúsculas
   (`feat(packs): validar rutas de sprites`).
 - Ramas: `<tipo>/<descripcion-corta-en-kebab>`.

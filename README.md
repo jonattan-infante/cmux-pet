@@ -92,12 +92,33 @@ mascota habla igual con las frases de respaldo del paquete.
 ### Con tu propio arte
 
 ```bash
-cmux-pet new mi-gato --sprites
-# pon idle.png, working.gif, done.png... en mi-gato/sprites/
+cmux-pet sprite mi-mascota idle gato.png       # una imagen a un estado
+cmux-pet sprite mi-mascota --dir ./mis-dibujos # varias, por nombre de archivo
+cmux-pet sprite mi-mascota --clear             # volver al dibujo vectorial
 ```
 
-Los GIF se animan solos. Sin arte, se usa el droide vectorial integrado tintado
-con tus colores; no pesa nada y no involucra arte de nadie.
+El comando copia la imagen al paquete, actualiza el manifiesto y recarga la
+mascota. No hace falta editar JSON.
+
+Con `--dir` toma los archivos que se llamen como un estado: `idle.png`,
+`working.gif`, `done.png`, `error.png`, `attention.png`, `info.png`, o
+`default.png` como comodín. Los GIF se animan solos.
+
+La imagen reemplaza el cuerpo entero. El programa sigue dibujando alrededor: la
+sombra del piso, los puntos de "trabajando", el signo de admiración cuando te
+necesita, y el salto al terminar.
+
+**Para partir de una mascota que ya viene incluida**, saca tu copia primero: las
+de fábrica se reemplazan al actualizar.
+
+```bash
+cmux-pet fork gatito mi-gato --name "Mi Gato"
+cmux-pet sprite mi-gato --dir ./mis-dibujos
+cmux-pet use mi-gato
+```
+
+Sin arte, se usa el droide vectorial integrado tintado con tus colores; no pesa
+nada y no involucra arte de nadie.
 
 El formato completo está en [`docs/reference/pet-pack.md`](docs/reference/pet-pack.md).
 

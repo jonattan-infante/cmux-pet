@@ -3,7 +3,12 @@ SHELL := /bin/bash
 PREFIX ?= $(HOME)/.cmux-pet
 BIN := $(PREFIX)/bin/cmux-pet
 
-.PHONY: help build release test test-shell packs packs-remote render verify install uninstall run stop restart log clean fmt
+.PHONY: help build release test test-shell packs packs-remote render verify install uninstall run stop restart log clean fmt pr
+
+# Este repo es personal. La cuenta activa de gh es estado global que cualquier
+# otra sesion voltea, asi que el token se pide explicitamente por usuario en vez
+# de confiar en cual quedo activa.
+GH := GH_TOKEN=$(shell gh auth token --user jonattan-infante 2>/dev/null) gh
 
 help: ## Muestra estos comandos
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "};{printf "  \033[1m%-12s\033[0m %s\n",$$1,$$2}'
@@ -60,6 +65,14 @@ log: ## Sigue el log en vivo
 
 fmt: ## Formatea el Swift (requiere swift-format)
 	@command -v swift-format >/dev/null && swift-format -i -r Sources Tests || echo "swift-format no instalado, omitido"
+
+# La @ es obligatoria: sin ella make imprime la linea y el token queda en pantalla.
+pr: verify ## Abre un PR de la rama actual con la cuenta correcta
+	@$(GH) pr create --fill --head "$$(git branch --show-current)"
+	@echo "  auto-merge:  make merge"
+
+merge: ## Deja la rama actual en auto-merge (entra sola cuando CI pase)
+	@$(GH) pr merge --auto --squash "$$(git branch --show-current)"
 
 clean: ## Borra artefactos de build
 	rm -rf .build render

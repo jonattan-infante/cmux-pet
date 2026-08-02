@@ -38,11 +38,11 @@ uninstall() {
     info "enganche removido de $ZSHRC (backup guardado)"
   fi
 
-  # La configuracion y los sprites del usuario NO se borran sin pedirlo.
+  # Nada del usuario se borra sin pedirlo: ni preferencias, ni mascotas, ni arte.
   rm -rf "$PREFIX/bin" "$PREFIX/shell" "$PREFIX/src"
   info "binario y shell removidos"
   bold "Listo."
-  echo "  Se conservaron tus preferencias y sprites en $PREFIX"
+  echo "  Se conservaron tus preferencias, mascotas y arte en $PREFIX"
   echo "  Para borrar todo:  rm -rf $PREFIX"
   exit 0
 }
@@ -93,15 +93,35 @@ install -m 755 "$BUILT" "$PREFIX/bin/cmux-pet"
 install -m 644 shell/pet.zsh "$PREFIX/shell/pet.zsh"
 info "instalado en $PREFIX/bin/cmux-pet"
 
-# Las mascotas que vienen con el repositorio. Se reemplazan siempre: son de
-# solo lectura para el usuario, sus frases generadas viven aparte en voices/.
+# Las mascotas que vienen con el repositorio. Se marcan con .bundled y se
+# reemplazan al actualizar; sus frases generadas viven aparte en voices/.
+#
+# Una mascota SIN el marcador es del usuario y no se toca nunca: puede tener el
+# mismo id que una incluida si el usuario la creo antes, y pisarla seria borrar
+# su trabajo sin avisar.
 for pack in pets/*/; do
   [[ -f "$pack/pet.json" ]] || continue
   id="$(basename "$pack")"
+  if [[ -d "$PREFIX/pets/$id" && ! -f "$PREFIX/pets/$id/.bundled" ]]; then
+    warn "\"$id\" ya existe y la editaste tu: la dejo como esta"
+    continue
+  fi
   rm -rf "$PREFIX/pets/$id"
   cp -R "$pack" "$PREFIX/pets/$id"
+  touch "$PREFIX/pets/$id/.bundled"
   info "mascota incluida: $id"
 done
+
+# Carpeta de sprites de versiones anteriores: ya no se lee, y su LEEME mandaba a
+# ponerle imagenes a la mascota en un sitio equivocado.
+if [[ -d "$PREFIX/sprites" ]]; then
+  if [[ -z "$(ls -A "$PREFIX/sprites" | grep -v '^LEEME.txt$')" ]]; then
+    rm -rf "$PREFIX/sprites"
+  else
+    warn "$PREFIX/sprites es de una version vieja y ya no se usa"
+    warn "para ponerle imagenes a una mascota:  cmux-pet sprite <id> <estado> <archivo>"
+  fi
+fi
 
 # Si no hay ninguna activa todavia, se activa la primera que haya.
 if ! grep -q '"activePet"[[:space:]]*:[[:space:]]*"' "$PREFIX/config.json" 2>/dev/null; then

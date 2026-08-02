@@ -22,6 +22,8 @@ public enum PetCommands {
         case "install", "add":   return install(rest)
         case "uninstall", "rm":  return uninstall(rest)
         case "new", "create":    return scaffold(rest)
+        case "sprite", "image":  return sprite(rest)
+        case "fork", "copy":     return fork(rest)
         case "validate", "check":return validate(rest)
         case "voice":            return voice(rest)
         case "search":           return search(rest)
@@ -62,10 +64,14 @@ public enum PetCommands {
             --force                       reemplaza si ya estaba instalada
             --use                         la activa despues de instalar
 
-        \(bold("Crear una mascota"))
+        \(bold("Crear y personalizar"))
           new <id>                        crea un paquete nuevo listo para editar
             --sprites                     con carpeta de imagenes en vez de vectorial
             --name <texto>                nombre para mostrar
+          fork <origen> <nuevo-id>        copia editable de una mascota existente
+          sprite <id> <estado> <archivo>  ponle una imagen a un estado
+          sprite <id> --dir <carpeta>     varias a la vez, por nombre de archivo
+          sprite <id> --clear             vuelve al dibujo vectorial
           validate <ruta>                 revisa un paquete y explica cada fallo
           voice [<id>]                    reescribe sus frases con Claude Code
 
