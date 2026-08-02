@@ -36,6 +36,14 @@ public struct PetLibrary {
         }.sorted { $0.id < $1.id }
     }
 
+    /// Las mascotas que trae el instalador se reemplazan al actualizar, asi que
+    /// editarlas seria perder el trabajo sin aviso. El marcador lo escribe
+    /// install.sh al copiarlas.
+    public static func isBundled(_ id: String) -> Bool {
+        FileManager.default.fileExists(
+            atPath: petsDir.appendingPathComponent(id).appendingPathComponent(".bundled").path)
+    }
+
     public static func find(_ id: String) -> PetPack? {
         switch PetPack.load(from: petsDir.appendingPathComponent(id)) {
         case .success(let p): return p

@@ -32,9 +32,12 @@ check "sintaxis de install.sh" 0 $?
 
 # --- desinstalacion sobre un zshrc con contenido alrededor ---
 PREFIX="$WORK/prefix"
-mkdir -p "$PREFIX/bin" "$PREFIX/shell" "$PREFIX/sprites"
+mkdir -p "$PREFIX/bin" "$PREFIX/shell" "$PREFIX/pets/mi-mascota/sprites" "$PREFIX/voices"
 touch "$PREFIX/bin/cmux-pet" "$PREFIX/shell/pet.zsh"
-echo 'mi-droide' > "$PREFIX/sprites/mi-droide.png"
+# El arte del usuario vive dentro de su paquete, no en una carpeta suelta.
+echo 'mi-dibujo' > "$PREFIX/pets/mi-mascota/sprites/idle.png"
+echo '{"id":"mi-mascota"}' > "$PREFIX/pets/mi-mascota/pet.json"
+echo '{"greeting":["hola"]}' > "$PREFIX/voices/mi-mascota.json"
 echo '{"quiet":false}' > "$PREFIX/config.json"
 
 cat > "$WORK/.zshrc" <<'EOF'
@@ -56,7 +59,9 @@ check "conserva los alias" 1 "$(grep -c "alias ll" "$WORK/.zshrc" || true)"
 check "conserva lo que venia despues" 1 "$(grep -c 'EDITOR=vim' "$WORK/.zshrc" || true)"
 check "deja backup del zshrc" 1 "$(ls "$WORK"/.zshrc.cmux-pet-backup.* 2>/dev/null | wc -l | tr -d ' ')"
 check "borra el binario" 0 "$(ls "$PREFIX/bin" 2>/dev/null | wc -l | tr -d ' ')"
-check "conserva los sprites del usuario" 1 "$(ls "$PREFIX/sprites" 2>/dev/null | wc -l | tr -d ' ')"
+check "conserva la mascota del usuario" 1 "$(ls "$PREFIX/pets" 2>/dev/null | wc -l | tr -d ' ')"
+check "conserva su arte" 1 "$(ls "$PREFIX/pets/mi-mascota/sprites" 2>/dev/null | wc -l | tr -d ' ')"
+check "conserva sus frases generadas" 1 "$(ls "$PREFIX/voices" 2>/dev/null | wc -l | tr -d ' ')"
 check "conserva la configuracion" 1 "$(ls "$PREFIX/config.json" 2>/dev/null | wc -l | tr -d ' ')"
 
 # --- desinstalar dos veces no debe explotar ni corromper ---
