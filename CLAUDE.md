@@ -118,9 +118,12 @@ que un pack está bien.
 
 ## Convenciones
 
+- **Este repo es personal: siempre la cuenta `jonattan-infante`.** La cuenta
+  activa de `gh` es estado global que otra sesión voltea, así que no se confía en
+  ella: usar `make pr` y `make merge`, que piden el token de esa cuenta
+  explícitamente. El remote ya está pinneado a `github-personal`.
 - **`main` está protegido**: nada entra sin PR y sin los cuatro checks en verde.
-  Ni el dueño puede empujar directo. Flujo: rama, `make verify`, `gh pr create`,
-  `gh pr merge --auto --squash`.
+  Ni el dueño puede empujar directo. Flujo: rama, `make pr`, `make merge`.
 - Commits: Conventional Commits, imperativo y minúsculas
   (`feat(packs): validar rutas de sprites`).
 - Ramas: `<tipo>/<descripcion-corta-en-kebab>`.

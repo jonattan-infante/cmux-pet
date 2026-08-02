@@ -69,10 +69,9 @@ cuatro checks tienen que estar en verde y el cambio tiene que venir de un PR.
 ```bash
 git checkout -b fix/mi-arreglo
 # trabajar
-make verify                      # antes de empujar, no después
 git push -u origin fix/mi-arreglo
-gh pr create --fill
-gh pr merge --auto --squash      # se mergea solo cuando CI pase
+make pr                          # corre el gate y abre el PR
+make merge                       # se mergea solo cuando CI pase
 ```
 
 No hace falta que nadie apruebe: el PR existe para que CI opine antes de que el
