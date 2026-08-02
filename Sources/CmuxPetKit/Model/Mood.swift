@@ -64,7 +64,7 @@ public final class PetTheme {
     /// Ruta del sprite del estado, con caida a `default`. nil significa que hay
     /// que dibujar el renderer vectorial.
     func spriteURL(for mood: Mood) -> URL? {
-        guard let pack = pack, pack.renderer != .vectorDroid else { return nil }
+        guard let pack = pack, pack.renderer == .sprites else { return nil }
         return pack.spritePaths[mood.rawValue] ?? pack.spritePaths["default"]
     }
 }
