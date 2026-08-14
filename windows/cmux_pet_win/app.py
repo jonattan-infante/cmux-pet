@@ -16,7 +16,6 @@ from .state import StateMachine, Mood
 from .ui import PetWindow
 
 FRAME_MS = 40                      # ~25 fps: fluido y barato
-BUNDLED = ["astro", "gatito", "llama"]   # las mascotas incluidas en el repo
 
 
 class App:
@@ -112,9 +111,19 @@ class App:
         self.config["position"] = [x, y]
         self.config.save()
 
+    def _installed_pets(self):
+        # Se descubren escaneando pets/: soltar una carpeta con pet.json basta,
+        # sin tocar codigo. Por eso los packs locales (no versionados) aparecen.
+        out = []
+        if paths.BUNDLED_PETS.exists():
+            for d in sorted(paths.BUNDLED_PETS.iterdir()):
+                if (d / "pet.json").exists():
+                    out.append(d.name)
+        return out or ["astro"]
+
     def _menu_items(self):
         items = []
-        for pid in BUNDLED:
+        for pid in self._installed_pets():
             mark = "  (activa)" if pid == self.config["activePet"] else ""
             items.append((f"Mascota: {pid}{mark}",
                           lambda p=pid: self._use_pet(p)))

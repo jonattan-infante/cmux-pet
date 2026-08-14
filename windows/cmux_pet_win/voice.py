@@ -29,14 +29,17 @@ _ALLOWED = set().union(*KINDS.values())
 
 
 class Pack:
-    def __init__(self, pet_id, name, accents, fallback, persona, language, renderer):
+    def __init__(self, pet_id, name, accents, fallback, persona, language,
+                 renderer, directory=None, sprites=None):
         self.id = pet_id
         self.name = name
         self.accents = accents          # {mood: (r,g,b)} normalizado
         self.fallback = fallback        # {kind: [templates]}
         self.persona = persona
         self.language = language
-        self.renderer = renderer        # "vector:droid" | "vector:ball" | ...
+        self.renderer = renderer        # "vector:droid" | "vector:llama" | "sprites"
+        self.dir = directory            # carpeta del pack, para resolver sprites
+        self.sprites = sprites or {}    # {mood|default: ruta absoluta al png/gif}
 
 
 def load_pack(pack_dir: Path) -> Pack:
@@ -67,7 +70,18 @@ def load_pack(pack_dir: Path) -> Pack:
     if persona_path.exists():
         persona = persona_path.read_text(encoding="utf-8")
 
-    return Pack(pet_id, name, accents, fallback, persona, language, renderer)
+    # Sprites: rutas relativas al pack. Solo se aceptan las que existen y no
+    # escapan del pack (frontera del sistema, igual que en macOS).
+    sprites = {}
+    for mood, rel in (manifest.get("sprites") or {}).items():
+        if not isinstance(rel, str) or ".." in rel:
+            continue
+        p = (pack_dir / rel).resolve()
+        if p.exists() and str(p).startswith(str(pack_dir.resolve())):
+            sprites[mood] = str(p)
+
+    return Pack(pet_id, name, accents, fallback, persona, language, renderer,
+                directory=pack_dir, sprites=sprites)
 
 
 def validate(raw: dict) -> dict:

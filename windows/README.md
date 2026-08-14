@@ -125,8 +125,9 @@ capturas.
 
 - El renderer vectorial es una adaptación a `Canvas`: colores planos en vez de los
   gradientes de AppKit. Se ve fiel, pero no idéntico.
-- Solo el renderer `vector:droid`. Los sprites y `vector:ball` / `vector:sage`
-  aún no están portados.
+- Renderers soportados: `vector:droid`, `vector:llama` y `sprites` (PNG y GIF
+  animado, con `tkinter` puro, respetando la transparencia). `vector:ball` y
+  `vector:sage` aún no están portados.
 - El click abre la carpeta en el Explorador; no trae la terminal al frente (en
   cmux eso lo hace el `rpc`, que aquí no existe).
 - La detección de "comando falló" es de mejor esfuerzo: depende de lo que Claude

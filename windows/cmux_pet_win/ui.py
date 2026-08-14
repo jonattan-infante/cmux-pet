@@ -34,6 +34,46 @@ def accent_hex(mood, pack) -> str:
     return rgb_to_hex(rgb)
 
 
+class Sprite:
+    """ Un sprite (PNG o GIF animado) cargado con tkinter puro, sin Pillow.
+
+    tkinter lee cada frame de un GIF con `format='gif -index N'` y respeta su
+    transparencia, asi que el fondo del personaje queda transparente sobre el
+    color magico de la ventana. Se reduce por subsample entero (unica escala que
+    ofrece PhotoImage) hasta acercarse a la altura objetivo.
+    """
+
+    def __init__(self, path, target_h=150):
+        self.frames = []
+        try:
+            self._load(path, target_h)
+        except tk.TclError:
+            self.frames = []
+
+    def _load(self, path, target_h):
+        n = 0
+        while True:
+            try:
+                img = tk.PhotoImage(file=path, format="gif -index %d" % n)
+            except tk.TclError:
+                break
+            self.frames.append(self._fit(img, target_h))
+            n += 1
+        if not self.frames:                       # no era GIF: intentar PNG suelto
+            self.frames.append(self._fit(tk.PhotoImage(file=path), target_h))
+
+    @staticmethod
+    def _fit(img, target_h):
+        factor = max(1, round(img.height() / target_h))
+        return img.subsample(factor, factor) if factor > 1 else img
+
+    def __bool__(self):
+        return bool(self.frames)
+
+    def frame(self, i):
+        return self.frames[i % len(self.frames)]
+
+
 class PetWindow:
     """ La ventana. No sabe de eventos de Claude Code: recibe mood, texto de
     burbuja y roster ya resueltos, y los dibuja. """
@@ -46,6 +86,8 @@ class PetWindow:
 
         self.mood = Mood.IDLE
         self.phase = 0.0
+        self._anim = 0                 # contador de frame del sprite
+        self._sprite_cache = {}        # ruta -> Sprite (evita recargar el GIF)
         self._bubble_text = ""
         self._bubble_until = 0.0
         self._roster = []
@@ -77,6 +119,7 @@ class PetWindow:
 
     def set_pack(self, pack):
         self.pack = pack
+        self._sprite_cache = {}   # otra mascota: descartar sus sprites
 
     def set_mood(self, mood):
         self.mood = mood
@@ -103,7 +146,12 @@ class PetWindow:
         self.phase += 0.05
         self.canvas.delete("all")
         blink = (int(self.phase * 2) % 37) == 0
-        if getattr(self.pack, "renderer", "vector:droid") == "vector:llama":
+        self._anim += 1
+        renderer = getattr(self.pack, "renderer", "vector:droid")
+        sprite = self._sprite_for(self.mood) if renderer == "sprites" else None
+        if sprite:
+            self._draw_sprite(sprite)
+        elif renderer == "vector:llama":
             self._draw_llama(blink)
         else:
             self._draw_droid(blink)
@@ -315,6 +363,33 @@ class PetWindow:
         # Signo de admiracion cuando te necesita.
         if self.mood == Mood.ATTENTION:
             c.create_text(head_cx + 25, head_cy - 16, text="!", fill=accent,
+                          font=self._font_bold)
+
+    # --- dibujo por sprite --------------------------------------------------
+
+    def _sprite_for(self, mood):
+        sprites = getattr(self.pack, "sprites", {})
+        path = sprites.get(mood) or sprites.get("default")
+        if not path:
+            return None
+        if path not in self._sprite_cache:
+            self._sprite_cache[path] = Sprite(path, target_h=150)
+        sp = self._sprite_cache[path]
+        return sp if sp else None
+
+    def _draw_sprite(self, sprite):
+        c = self.canvas
+        frame = sprite.frame(self._anim)
+        w, h = frame.width(), frame.height()
+        # Sombra en el piso (el programa sigue dibujando alrededor del arte).
+        c.create_oval(self.body_cx - w * 0.28, self.body_bottom - 4,
+                      self.body_cx + w * 0.28, self.body_bottom + 6,
+                      fill="#0A0C10", outline="")
+        c.create_image(self.body_cx, self.body_bottom + 4, anchor="s", image=frame)
+        # Signo de admiracion cuando te necesita.
+        if self.mood == Mood.ATTENTION:
+            c.create_text(self.body_cx + w * 0.34, self.body_bottom - h + 6,
+                          text="!", fill=accent_hex(self.mood, self.pack),
                           font=self._font_bold)
 
     # --- burbuja y roster ---------------------------------------------------
