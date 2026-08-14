@@ -21,7 +21,7 @@ BUBBLE_FG = "#EEF1F6"
 
 # Caja del cuerpo dentro del canvas y margenes al borde de pantalla.
 BODY_W, BODY_H = 104, 120
-CANVAS_W, CANVAS_H = 440, 300
+CANVAS_W, CANVAS_H = 480, 380
 MARGIN = 24
 
 
@@ -88,6 +88,7 @@ class PetWindow:
         self.phase = 0.0
         self._anim = 0                 # contador de frame del sprite
         self.anim_divisor = 1          # 1 nativa, mayor mas lento, 0 quieto
+        self.sprite_h = 220            # altura objetivo del sprite en px
         self._sprite_cache = {}        # ruta -> Sprite (evita recargar el GIF)
         self._bubble_text = ""
         self._bubble_until = 0.0
@@ -113,6 +114,10 @@ class PetWindow:
         # El cuerpo vive en la esquina inferior derecha del canvas.
         self.body_cx = CANVAS_W - MARGIN - BODY_W / 2
         self.body_bottom = CANVAS_H - MARGIN
+        # Esquina inferior derecha de la burbuja: se ancla al tope del cuerpo, y
+        # el dibujo del sprite la reajusta a su tamano real para no encimarse.
+        self._bubble_anchor = (self.body_cx - BODY_W / 2 - 8,
+                               self.body_bottom - BODY_H - 6)
 
         self._bind()
 
@@ -148,6 +153,8 @@ class PetWindow:
         self.canvas.delete("all")
         blink = (int(self.phase * 2) % 37) == 0
         self._anim += 1
+        self._bubble_anchor = (self.body_cx - BODY_W / 2 - 8,
+                               self.body_bottom - BODY_H - 6)
         renderer = getattr(self.pack, "renderer", "vector:droid")
         sprite = self._sprite_for(self.mood) if renderer == "sprites" else None
         if sprite:
@@ -374,7 +381,7 @@ class PetWindow:
         if not path:
             return None
         if path not in self._sprite_cache:
-            self._sprite_cache[path] = Sprite(path, target_h=150)
+            self._sprite_cache[path] = Sprite(path, target_h=self.sprite_h)
         sp = self._sprite_cache[path]
         return sp if sp else None
 
@@ -387,6 +394,7 @@ class PetWindow:
         # se corta contra el borde de la ventana. Se ancla abajo-derecha con margen.
         cx = CANVAS_W - MARGIN - w / 2
         base = CANVAS_H - MARGIN
+        self._bubble_anchor = (cx - w / 2 - 8, base - h - 6)   # burbuja sobre el sprite
         c.create_oval(cx - w * 0.28, base - 4, cx + w * 0.28, base + 6,
                       fill="#0A0C10", outline="")
         c.create_image(cx, base + 4, anchor="s", image=frame)
@@ -398,8 +406,7 @@ class PetWindow:
 
     def _draw_bubble(self, text):
         c = self.canvas
-        anchor_x = self.body_cx - BODY_W / 2 - 8
-        anchor_y = self.body_bottom - BODY_H - 6
+        anchor_x, anchor_y = self._bubble_anchor
         pad = 10
         maxw = 300
         # Crear el texto primero para medirlo, luego el globo detras.
@@ -427,8 +434,7 @@ class PetWindow:
         line_h = 18
         w = 260
         h = pad * 2 + line_h * (len(rows) + 1)
-        bx1 = self.body_cx - BODY_W / 2 - 8
-        by1 = self.body_bottom - BODY_H - 6
+        bx1, by1 = self._bubble_anchor
         bx0 = bx1 - w
         by0 = by1 - h
         self._round_rect(bx0, by0, bx1, by1, 10, fill=BUBBLE_BG, outline=STEEL_DARK)

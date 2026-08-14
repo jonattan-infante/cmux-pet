@@ -10,6 +10,7 @@ DEFAULTS = {
     "narrateEverySeconds": 150,
     "position": None,          # [x, y] recordado tras arrastrar; None = auto
     "animSlowdown": 1,         # velocidad del sprite: 1 nativa, mayor mas lento, 0 quieto
+    "spriteHeight": 220,       # altura del sprite en px (para packs con GIF/PNG)
 }
 
 

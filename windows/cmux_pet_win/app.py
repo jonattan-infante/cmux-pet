@@ -40,6 +40,7 @@ class App:
                 "moved": self._on_moved,
             })
         self.window.anim_divisor = self.config.get("animSlowdown", 1)
+        self.window.sprite_h = self.config.get("spriteHeight", 220)
         self.window.place_bottom_right(self.config.get("position"))
 
         # Saludo al arrancar.
