@@ -87,6 +87,7 @@ class PetWindow:
         self.mood = Mood.IDLE
         self.phase = 0.0
         self._anim = 0                 # contador de frame del sprite
+        self.anim_divisor = 1          # 1 nativa, mayor mas lento, 0 quieto
         self._sprite_cache = {}        # ruta -> Sprite (evita recargar el GIF)
         self._bubble_text = ""
         self._bubble_until = 0.0
@@ -379,18 +380,19 @@ class PetWindow:
 
     def _draw_sprite(self, sprite):
         c = self.canvas
-        frame = sprite.frame(self._anim)
+        div = self.anim_divisor
+        frame = sprite.frame(0 if div <= 0 else self._anim // div)
         w, h = frame.width(), frame.height()
-        # Sombra en el piso (el programa sigue dibujando alrededor del arte).
-        c.create_oval(self.body_cx - w * 0.28, self.body_bottom - 4,
-                      self.body_cx + w * 0.28, self.body_bottom + 6,
+        # El sprite se centra por SU tamano, no por la caja del vector: asi nunca
+        # se corta contra el borde de la ventana. Se ancla abajo-derecha con margen.
+        cx = CANVAS_W - MARGIN - w / 2
+        base = CANVAS_H - MARGIN
+        c.create_oval(cx - w * 0.28, base - 4, cx + w * 0.28, base + 6,
                       fill="#0A0C10", outline="")
-        c.create_image(self.body_cx, self.body_bottom + 4, anchor="s", image=frame)
-        # Signo de admiracion cuando te necesita.
+        c.create_image(cx, base + 4, anchor="s", image=frame)
         if self.mood == Mood.ATTENTION:
-            c.create_text(self.body_cx + w * 0.34, self.body_bottom - h + 6,
-                          text="!", fill=accent_hex(self.mood, self.pack),
-                          font=self._font_bold)
+            c.create_text(cx + w / 2 - 4, base - h + 6, text="!",
+                          fill=accent_hex(self.mood, self.pack), font=self._font_bold)
 
     # --- burbuja y roster ---------------------------------------------------
 

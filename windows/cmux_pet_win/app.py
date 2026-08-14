@@ -39,6 +39,7 @@ class App:
                 "items": self._menu_items(),
                 "moved": self._on_moved,
             })
+        self.window.anim_divisor = self.config.get("animSlowdown", 1)
         self.window.place_bottom_right(self.config.get("position"))
 
         # Saludo al arrancar.
@@ -128,11 +129,22 @@ class App:
             items.append((f"Mascota: {pid}{mark}",
                           lambda p=pid: self._use_pet(p)))
         items.append(("-", None))
+        cur = self.config.get("animSlowdown", 1)
+        for label, val in (("Baile: normal", 1), ("Baile: lento", 3), ("Baile: quieto", 0)):
+            mark = "  *" if val == cur else ""
+            items.append((label + mark, lambda v=val: self._set_dance(v)))
+        items.append(("-", None))
         quiet_label = "Reactivar avisos" if self.config["quiet"] else "Silenciar avisos"
         items.append((quiet_label, self._toggle_quiet))
         items.append(("-", None))
         items.append(("Salir", self._quit))
         return items
+
+    def _set_dance(self, value):
+        self.config["animSlowdown"] = value
+        self.config.save()
+        self.window.anim_divisor = value
+        self.window.on_menu["items"] = self._menu_items()
 
     def _use_pet(self, pid):
         if pid == self.config["activePet"]:

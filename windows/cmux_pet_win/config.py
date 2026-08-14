@@ -9,6 +9,7 @@ DEFAULTS = {
     "quiet": False,
     "narrateEverySeconds": 150,
     "position": None,          # [x, y] recordado tras arrastrar; None = auto
+    "animSlowdown": 1,         # velocidad del sprite: 1 nativa, mayor mas lento, 0 quieto
 }
 
 
