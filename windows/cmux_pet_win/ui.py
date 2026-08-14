@@ -103,7 +103,10 @@ class PetWindow:
         self.phase += 0.05
         self.canvas.delete("all")
         blink = (int(self.phase * 2) % 37) == 0
-        self._draw_droid(blink)
+        if getattr(self.pack, "renderer", "vector:droid") == "vector:llama":
+            self._draw_llama(blink)
+        else:
+            self._draw_droid(blink)
         if self._hovering and self._roster:
             self._draw_roster()
         elif self._bubble_text and now < self._bubble_until:
@@ -217,6 +220,102 @@ class PetWindow:
         if self.mood == Mood.ERROR:
             return math.sin(p * 1.2) * 2
         return math.sin(p * 0.7) * 5
+
+    # --- dibujo de la llama -------------------------------------------------
+
+    def _draw_llama(self, blink):
+        # Llama morada con gafas de sol y capucha oscura: contorno negro grueso,
+        # cuerpo rechoncho. El estado se lee por el reflejo de las gafas (el unico
+        # elemento tenido por el mood), asi el personaje no pierde su onda.
+        c = self.canvas
+        accent = accent_hex(self.mood, self.pack)
+        cx = self.body_cx
+        by = self.body_bottom
+        PURPLE = "#9264C8"
+        PURPLE_LT = "#AD8AD8"
+        OUTLINE = "#171021"
+        HOOD = "#211A30"
+        GLASS = "#120D1A"
+        sway = self._dome_sway() * 0.5
+
+        leg_h, body_h, body_w = 20, 54, 72
+        body_top = by - leg_h - body_h
+        body_cy = body_top + body_h / 2
+
+        # Sombra en el piso.
+        c.create_oval(cx - 36, by - 4, cx + 36, by + 6, fill="#0A0C10", outline="")
+
+        # Patas traseras (mas oscuras, para dar profundidad).
+        for lx in (cx - 14, cx + 18):
+            self._round_rect(lx - 6, by - leg_h - 2, lx + 6, by, 4,
+                             fill=self._shade(PURPLE, 0.22), outline=OUTLINE, width=2)
+
+        # Cuerpo rechoncho.
+        self._round_rect(cx - body_w / 2, body_top, cx + body_w / 2,
+                         body_top + body_h, 22, fill=PURPLE, outline=OUTLINE, width=3)
+        # Colita.
+        self._round_rect(cx + body_w / 2 - 5, body_cy - 4, cx + body_w / 2 + 8,
+                         body_cy + 12, 5, fill=PURPLE, outline=OUTLINE, width=2)
+        # Patas delanteras.
+        for lx in (cx - 20, cx + 6):
+            self._round_rect(lx - 6, by - leg_h, lx + 6, by, 4,
+                             fill=PURPLE, outline=OUTLINE, width=2)
+
+        # --- cuello y cabeza ---
+        head_cx = cx + sway
+        head_cy = body_top - 22
+
+        # Cuello.
+        self._round_rect(head_cx - 13, head_cy + 2, cx + 13, body_top + 14, 10,
+                         fill=PURPLE, outline=OUTLINE, width=3)
+
+        # Orejas (asoman por debajo de la capucha).
+        c.create_polygon(head_cx - 9, head_cy - 12, head_cx - 13, head_cy - 28,
+                         head_cx - 2, head_cy - 15, fill=PURPLE, outline=OUTLINE, width=2)
+        c.create_polygon(head_cx + 9, head_cy - 12, head_cx + 13, head_cy - 28,
+                         head_cx + 2, head_cy - 15, fill=PURPLE, outline=OUTLINE, width=2)
+
+        # Cabeza.
+        self._round_rect(head_cx - 18, head_cy - 16, head_cx + 18, head_cy + 18, 14,
+                         fill=PURPLE, outline=OUTLINE, width=3)
+        # Hocico mas claro, con fosas.
+        self._round_rect(head_cx - 11, head_cy + 5, head_cx + 11, head_cy + 21, 8,
+                         fill=PURPLE_LT, outline=OUTLINE, width=2)
+        c.create_oval(head_cx - 5, head_cy + 11, head_cx - 2, head_cy + 14, fill=OUTLINE, outline="")
+        c.create_oval(head_cx + 2, head_cy + 11, head_cx + 5, head_cy + 14, fill=OUTLINE, outline="")
+
+        # Audifonos: banda sobre la cabeza y una almohadilla a cada lado.
+        c.create_arc(head_cx - 21, head_cy - 22, head_cx + 21, head_cy + 8,
+                     start=22, extent=136, style=tk.ARC, outline=HOOD, width=6)
+        for side in (-1, 1):
+            ex = head_cx + side * 17
+            self._round_rect(ex - 6, head_cy - 6, ex + 6, head_cy + 11, 5,
+                             fill=HOOD, outline=OUTLINE, width=2)
+            c.create_oval(ex - 3, head_cy - 1, ex + 3, head_cy + 6,
+                          fill=self._shade(PURPLE, 0.30), outline="")   # cojin
+
+        # Gafas de sol: dos lentes negros con puente.
+        gy0, gy1 = head_cy - 3, head_cy + 7
+        self._round_rect(head_cx - 16, gy0, head_cx - 2, gy1, 4,
+                         fill=GLASS, outline=OUTLINE, width=2)
+        self._round_rect(head_cx + 2, gy0, head_cx + 16, gy1, 4,
+                         fill=GLASS, outline=OUTLINE, width=2)
+        c.create_line(head_cx - 2, gy0 + 2, head_cx + 2, gy0 + 2, fill=OUTLINE, width=2)
+
+        # Reflejo de las gafas: el color del estado. Late cuando te necesita o falla.
+        glow = 0.9
+        if self.mood == Mood.ATTENTION:
+            glow = 0.55 + 0.45 * (0.5 + 0.5 * math.sin(self.phase * 6))
+        elif self.mood == Mood.ERROR:
+            glow = 0.35 + 0.65 * (1.0 if math.sin(self.phase * 14) > 0 else 0.4)
+        refl = self._dim(accent, glow)
+        c.create_line(head_cx - 14, gy1 - 2, head_cx - 9, gy0 + 2, fill=refl, width=2)
+        c.create_line(head_cx + 4, gy1 - 2, head_cx + 9, gy0 + 2, fill=refl, width=2)
+
+        # Signo de admiracion cuando te necesita.
+        if self.mood == Mood.ATTENTION:
+            c.create_text(head_cx + 25, head_cy - 16, text="!", fill=accent,
+                          font=self._font_bold)
 
     # --- burbuja y roster ---------------------------------------------------
 

@@ -1,0 +1,40 @@
+{
+  "greeting": [
+    "Mmm, aqui estoy, rumiando y vigilando tus agentes.",
+    "Llama en posicion. Nada se me escapa desde aca arriba.",
+    "Lista y tranquila, pero muy atenta."
+  ],
+  "agentDone": [
+    "{agent} termino su turno{where}. Bien hecho, sigo mascando.",
+    "Listo: {agent} cerro{where}. Ni me despeine.",
+    "{agent} acabo{where}. Todo en calma por aca."
+  ],
+  "commandDone": [
+    "{cmd} corrio limpio en {time}{where}. Suave como lana.",
+    "Mmm, {cmd} termino en {time}{where}, sin drama.",
+    "{cmd} cerro bien, {time}{where}. Aprobado."
+  ],
+  "commandError": [
+    "Ffft. {cmd} fallo con codigo {code}{where}. Casi te escupo.",
+    "{cmd} se rompio, salida {code}{where}. Alguien la rego.",
+    "Mmm, no. {cmd} cayo con {code}{where}. Revisalo."
+  ],
+  "attention": [
+    "Oye, {agent} necesita {what}{where}. Te esta esperando.",
+    "Levanto la oreja: {agent} pide {what}{where}.",
+    "{agent} se detuvo por {what}{where}. Anda, atiendelo."
+  ],
+  "working": [
+    "{agent} sigue {doing}, lleva {time}{where}. Yo, rumiando.",
+    "Mmm, {agent} anda {doing} desde hace {time}{where}.",
+    "{agent} avanza {doing}, {time}{where} y contando."
+  ],
+  "portUp": [
+    "El puerto {port} desperto{where}. Ya escucha.",
+    "Mmm, {port} quedo abierto{where}, todo fluye."
+  ],
+  "portDown": [
+    "El puerto {port} se callo{where}.",
+    "{port} dejo de escuchar{where}. Silencio."
+  ]
+}

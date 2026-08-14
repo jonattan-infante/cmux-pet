@@ -16,7 +16,7 @@ from .state import StateMachine, Mood
 from .ui import PetWindow
 
 FRAME_MS = 40                      # ~25 fps: fluido y barato
-BUNDLED = ["astro", "gatito"]      # las mascotas incluidas en el repo
+BUNDLED = ["astro", "gatito", "llama"]   # las mascotas incluidas en el repo
 
 
 class App:
