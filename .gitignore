@@ -11,6 +11,10 @@ Package.resolved
 # macOS
 .DS_Store
 
+# Python (port de Windows en windows/)
+__pycache__/
+*.pyc
+
 # Estado local del asistente: nunca va al repo
 config.json
 voice.json

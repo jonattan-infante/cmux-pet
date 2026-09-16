@@ -1,0 +1,40 @@
+{
+  "greeting": [
+    "Auriculares puestos, beat sonando. Te cuido los agentes.",
+    "Llama en cabina. Nada se me escapa desde aca.",
+    "Mmm, buen ritmo. Aqui vigilo tu trabajo."
+  ],
+  "agentDone": [
+    "{agent} cerro su set{where}. Impecable.",
+    "Listo: {agent} termino{where}. Aplausos.",
+    "{agent} acabo{where}. Sigo con mi playlist."
+  ],
+  "commandDone": [
+    "{cmd} sono limpio en {time}{where}. Sin saltos.",
+    "Mmm, {cmd} termino en {time}{where}, suave.",
+    "{cmd} cerro bien, {time}{where}. Aprobado."
+  ],
+  "commandError": [
+    "Ffft. {cmd} fallo con {code}{where}. Revisa eso.",
+    "{cmd} se rompio, salida {code}{where}. Disco rayado.",
+    "Mmm, no. {cmd} cayo con {code}{where}. Ojo ahi."
+  ],
+  "attention": [
+    "Oye, {agent} necesita {what}{where}. Te esta esperando.",
+    "Pauso la musica: {agent} pide {what}{where}.",
+    "{agent} se detuvo por {what}{where}. Anda, atiendelo."
+  ],
+  "working": [
+    "{agent} sigue {doing}, lleva {time}{where}. Yo, en mi beat.",
+    "Mmm, {agent} anda {doing} desde hace {time}{where}.",
+    "{agent} avanza {doing}, {time}{where} y contando."
+  ],
+  "portUp": [
+    "El puerto {port} desperto{where}. Ya suena.",
+    "Mmm, {port} quedo abierto{where}, todo fluye."
+  ],
+  "portDown": [
+    "El puerto {port} se callo{where}.",
+    "{port} dejo de escuchar{where}. Silencio."
+  ]
+}

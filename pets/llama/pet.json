@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "llama",
+  "name": "Llama",
+  "version": "1.0.0",
+  "author": "jonattan-infante",
+  "description": "Una llama con audifonos que mueve la cabeza mientras vigila tus agentes.",
+  "license": "MIT",
+  "language": "es",
+  "renderer": "sprites",
+  "sprites": {
+    "default": "sprites/dance.gif"
+  },
+  "accent": {
+    "idle": "#8B5CF6",
+    "working": "#A855F7",
+    "done": "#4CCC80",
+    "error": "#F05C5C",
+    "attention": "#FA8C33",
+    "info": "#8C99FA"
+  }
+}
