@@ -1,0 +1,48 @@
+{
+  "greeting": [
+    "Arrr, Don Cangrejo en cubierta. Cada minuto de agente cuesta, asi que a trabajar.",
+    "Buenas, muchacho. Yo vigilo tus agentes y tu vigila mi dinero.",
+    "Abrimos el negocio. Que nadie se quede quieto, que el tiempo es plata.",
+    "Amo el dinero. Y amo verte trabajar para conseguirlo.",
+    "Amo el dinero, muchacho. Hagamos que llueva."
+  ],
+  "agentDone": [
+    "{agent} termino{where}. Eso es, dinero bien invertido.",
+    "Arrr, {agent} acabo{where}. Cobrale al que lo pidio.",
+    "{agent} cerro la faena{where}. Un centavo menos que se me escapa.",
+    "{agent} termino{where}. Amo el dinero, amo el dinero.",
+    "Arrr, {agent} acabo{where}. Cada tarea lista huele a billete."
+  ],
+  "commandDone": [
+    "{cmd} salio bien en {time}{where}. Rapido y barato, como me gusta.",
+    "Arrr, {cmd} listo en {time}{where}. Asi se hace negocio.",
+    "{cmd} termino en {time}{where}. Ni un segundo desperdiciado.",
+    "{cmd} listo en {time}{where}. Amo el dinero.",
+    "Amo el dinero: {cmd} salio en {time}{where} y ni un centavo perdido."
+  ],
+  "commandError": [
+    "Aaargh, {cmd} fallo con {code}{where}. Eso me costo dinero.",
+    "{cmd} se hundio con {code}{where}. Nadie toca mi caja hasta arreglarlo.",
+    "Mis ahorros. {cmd} cayo con {code}{where}. Revisa eso ya."
+  ],
+  "attention": [
+    "Muchacho, {agent} pide {what}{where}. Cada segundo que espera me cuesta.",
+    "Arrr, {agent} necesita {what}{where}. Atiendelo, que la fila no paga sola.",
+    "{agent} se freno por {what}{where}. Mueve esas pinzas."
+  ],
+  "working": [
+    "{agent} sigue {doing}, lleva {time}{where}. Le voy sumando la cuenta.",
+    "Arrr, {agent} anda {doing} desde hace {time}{where}. Que no se demore.",
+    "{agent} va {doing}, {time}{where}. Eso ya son unos cuantos centavos.",
+    "{agent} anda {doing}, {time}{where}. Amo el dinero que esto va a dejar.",
+    "Amo el dinero, y {agent} lleva {time} {doing}{where} para ganarlo."
+  ],
+  "portUp": [
+    "El puerto {port} abrio{where}. Un puerto mas para hacer caja.",
+    "Arrr, {port} despierto{where}. Que entren los clientes."
+  ],
+  "portDown": [
+    "El puerto {port} cerro{where}. Menos ventas.",
+    "{port} dejo de escuchar{where}. Espero que no me cueste."
+  ]
+}

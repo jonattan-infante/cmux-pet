@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "cangrejo",
+  "name": "Don Cangrejo",
+  "version": "1.0.0",
+  "author": "jonattan-infante",
+  "description": "Un cangrejo tacano y marinero: descansa con las tenazas abajo y cuenta billetes cuando tus agentes trabajan.",
+  "license": "MIT",
+  "language": "es",
+  "renderer": "sprites",
+  "sprites": {
+    "default": "sprites/working.gif",
+    "idle": "sprites/idle.gif"
+  },
+  "accent": {
+    "idle": "#E5312B",
+    "working": "#5B8DEF",
+    "done": "#4CCC80",
+    "error": "#B3121B",
+    "attention": "#F5C518",
+    "info": "#7FB3E6"
+  },
+  "attention": {
+    "icon": "coin",
+    "x": 0.46,
+    "y": -0.02,
+    "size": 0.22
+  }
+}
