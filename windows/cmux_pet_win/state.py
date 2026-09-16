@@ -41,7 +41,8 @@ def blend(rgb, fraction, other=(0.0, 0.0, 0.0)):
 
 
 # Ventanas de tiempo (segundos). Deciden cuando un estado decae.
-ACTIVE_WINDOW = 8.0     # sin senal en este tiempo, la sesion deja de "trabajar"
+ACTIVE_WINDOW = 180.0   # tras la ULTIMA HERRAMIENTA: cubre las pausas largas de pensamiento entre herramientas (Stop cierra antes)
+PROMPT_WINDOW = 60.0    # tras un prompt SIN herramientas todavia: respuesta solo de texto o Stop que no llego
 DONE_SHOW = 6.0         # cuanto se muestra "listo" tras terminar
 ERROR_SHOW = 8.0        # cuanto se muestra "fallo" tras un error
 INFO_SHOW = 5.0         # cuanto se muestra "info" tras una notificacion
@@ -56,6 +57,8 @@ class Session:
     steps: int = 0
     started_ts: float = 0.0
     last_ts: float = 0.0
+    last_tool_ts: float = -1e9      # ultimo PreToolUse/PostToolUse
+    prompt_ts: float = -1e9         # ultimo UserPromptSubmit
     stopped: bool = False
     attention: bool = False
     error_ts: float = -1e9
@@ -63,7 +66,13 @@ class Session:
     info_ts: float = -1e9
 
     def active(self, now: float) -> bool:
-        return (not self.stopped) and (now - self.last_ts) < ACTIVE_WINDOW
+        # "Trabajando" lo sostienen las herramientas; un prompt solo lo sostiene
+        # un rato corto. Asi, si el Stop no llega (respuesta solo de texto,
+        # hook caido), la mascota vuelve sola al reposo.
+        if self.stopped:
+            return False
+        return ((now - self.last_tool_ts) < ACTIVE_WINDOW
+                or (now - self.prompt_ts) < PROMPT_WINDOW)
 
 
 @dataclass
@@ -118,16 +127,19 @@ class StateMachine:
             # El humano respondio: se acabo la espera y se reanuda el trabajo.
             s.stopped = False
             s.attention = False
+            s.prompt_ts = now
             return None
 
         if etype == "PreToolUse":
             s.stopped = False
             s.attention = False
+            s.last_tool_ts = now
             s.last_tool = ev.get("tool", "") or s.last_tool
             s.steps += 1
             return None
 
         if etype == "PostToolUse":
+            s.last_tool_ts = now
             s.last_tool = ev.get("tool", "") or s.last_tool
             if ev.get("ok", True) is False:
                 s.error_ts = now
@@ -142,6 +154,11 @@ class StateMachine:
             return None
 
         if etype == "Notification":
+            if _is_idle_notice(ev.get("message", "")):
+                # "Claude is waiting for your input": Claude Code lo manda un
+                # minuto despues de terminar el turno. No es un pedido; la
+                # sesion ya esta en reposo y asi debe verse.
+                return None
             s.attention = True
             return Announcement(
                 kind="attention",
@@ -222,17 +239,35 @@ class StateMachine:
 
 # --- helpers (se importan tarde para evitar ciclos en tests) ----------------
 
+# Alias de visualizacion: nombres de carpeta -> como se muestran en el roster y
+# en las burbujas (p.ej. la carpeta home del usuario, corta). Vienen de la
+# config del usuario (workspaceAliases), no del repo.
+_WS_ALIASES = {}
+
+
+def set_workspace_aliases(aliases) -> None:
+    _WS_ALIASES.clear()
+    if isinstance(aliases, dict):
+        _WS_ALIASES.update({str(k): str(v) for k, v in aliases.items()})
+
+
 def _basename(path: str) -> str:
     if not path:
         return ""
     path = path.replace("\\", "/").rstrip("/")
-    return path.rsplit("/", 1)[-1] if "/" in path else path
+    name = path.rsplit("/", 1)[-1] if "/" in path else path
+    return _WS_ALIASES.get(name, name)
 
 
 def _agent(sid: str) -> str:
     # Claude Code no nombra a sus agentes; todos son "Claude". El workspace
     # distingue de cual se habla, via {where}.
     return "Claude"
+
+
+def _is_idle_notice(message: str) -> bool:
+    m = (message or "").lower()
+    return "waiting for your input" in m or "idle" in m
 
 
 def _what(message: str) -> str:

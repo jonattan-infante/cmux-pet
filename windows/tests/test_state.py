@@ -4,7 +4,7 @@ import unittest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from cmux_pet_win.state import StateMachine, Mood  # noqa: E402
+from cmux_pet_win.state import ACTIVE_WINDOW, PROMPT_WINDOW, StateMachine, Mood  # noqa: E402
 
 
 def ev(event, session="s1", cwd="C:/code/Fineract", **kw):
@@ -27,7 +27,7 @@ class StateMachineTests(unittest.TestCase):
         sm = StateMachine()
         sm.ingest(ev("PreToolUse", tool="Read"), now=10.0)
         # Pasada la ventana activa y sin done reciente: vuelve a reposo.
-        self.assertEqual(sm.mood(now=10.0 + 100), Mood.IDLE)
+        self.assertEqual(sm.mood(now=10.0 + ACTIVE_WINDOW + 1), Mood.IDLE)
 
     def test_stop_is_done_then_idle(self):
         sm = StateMachine()
@@ -90,3 +90,35 @@ class StateMachineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IdleNoticeTests(unittest.TestCase):
+    def test_waiting_for_input_no_es_atencion(self):
+        sm = StateMachine()
+        sm.ingest(ev("PreToolUse", tool="Bash"), now=1.0)
+        sm.ingest(ev("Stop"), now=2.0)
+        a = sm.ingest(ev("Notification", message="Claude is waiting for your input"), now=62.0)
+        self.assertIsNone(a)
+        self.assertEqual(sm.mood(now=70.0), Mood.IDLE)
+
+    def test_permission_si_es_atencion(self):
+        sm = StateMachine()
+        sm.ingest(ev("Notification", message="Claude needs your permission"), now=1.0)
+        self.assertEqual(sm.mood(now=2.0), Mood.ATTENTION)
+
+
+class PromptWithoutToolsTests(unittest.TestCase):
+    def test_prompt_solo_trabaja_un_rato_corto(self):
+        # Respuesta solo de texto y Stop que no llega: no puede quedarse en plata.
+        sm = StateMachine()
+        sm.ingest(ev("UserPromptSubmit"), now=10.0)
+        self.assertEqual(sm.mood(now=11.0), Mood.WORKING)
+        self.assertEqual(sm.mood(now=10.0 + PROMPT_WINDOW + 1), Mood.IDLE)
+
+    def test_herramienta_sostiene_la_ventana_larga(self):
+        sm = StateMachine()
+        sm.ingest(ev("UserPromptSubmit"), now=10.0)
+        sm.ingest(ev("PreToolUse", tool="Bash"), now=12.0)
+        self.assertEqual(sm.mood(now=12.0 + PROMPT_WINDOW + 5), Mood.WORKING)
+        self.assertEqual(sm.mood(now=12.0 + ACTIVE_WINDOW + 1), Mood.IDLE)
+

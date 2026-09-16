@@ -16,8 +16,8 @@ TRANSPARENT = "#ff00ff"     # magenta: color que desaparece y deja pasar el clic
 STEEL = "#B2BAC6"
 STEEL_DARK = "#586273"
 INK = "#1E222C"
-BUBBLE_BG = "#1B1E27"
-BUBBLE_FG = "#EEF1F6"
+BUBBLE_BG = "#241830"       # morado muy oscuro, a juego con la llama
+BUBBLE_FG = "#F3EEF9"
 
 # Caja del cuerpo dentro del canvas y margenes al borde de pantalla.
 BODY_W, BODY_H = 104, 120
@@ -34,23 +34,48 @@ def accent_hex(mood, pack) -> str:
     return rgb_to_hex(rgb)
 
 
-class Sprite:
-    """ Un sprite (PNG o GIF animado) cargado con tkinter puro, sin Pillow.
+try:                                              # Pillow es opcional
+    from PIL import Image, ImageSequence, ImageTk
+    _HAS_PIL = True
+except ImportError:                               # respaldo: solo tkinter
+    _HAS_PIL = False
 
-    tkinter lee cada frame de un GIF con `format='gif -index N'` y respeta su
-    transparencia, asi que el fondo del personaje queda transparente sobre el
-    color magico de la ventana. Se reduce por subsample entero (unica escala que
-    ofrece PhotoImage) hasta acercarse a la altura objetivo.
+
+class Sprite:
+    """ Un sprite (PNG o GIF animado) escalado a cualquier altura.
+
+    Con Pillow se redimensiona a la altura exacta pedida (LANCZOS). El
+    tkinter puro solo ofrece subsample entero, asi que a 150px de origen solo
+    podia mostrar 150/75/50..., saltando de golpe entre tamanos. Para no dejar
+    el aura rosada que el antialias mezcla contra el magenta de fondo, el borde
+    se hace duro (umbral de alfa) y lo transparente se pinta del color magico.
+    Sin Pillow cae al metodo viejo por subsample.
     """
 
     def __init__(self, path, target_h=150):
         self.frames = []
         try:
-            self._load(path, target_h)
-        except tk.TclError:
+            if _HAS_PIL:
+                self._load_pil(path, target_h)
+            else:
+                self._load_tk(path, target_h)
+        except (tk.TclError, OSError):
             self.frames = []
 
-    def _load(self, path, target_h):
+    def _load_pil(self, path, target_h):
+        magenta = (255, 0, 255)
+        im = Image.open(path)
+        for frame in ImageSequence.Iterator(im):
+            rgba = frame.convert("RGBA")          # convertir DENTRO del loop
+            w = max(1, round(rgba.width * target_h / rgba.height))
+            rgba = rgba.resize((w, target_h), Image.LANCZOS)
+            r, g, b, a = rgba.split()
+            a = a.point(lambda v: 255 if v >= 128 else 0)   # borde duro
+            bg = Image.new("RGB", rgba.size, magenta)
+            bg.paste(Image.merge("RGB", (r, g, b)), (0, 0), a)
+            self.frames.append(ImageTk.PhotoImage(bg))
+
+    def _load_tk(self, path, target_h):
         n = 0
         while True:
             try:
@@ -89,6 +114,8 @@ class PetWindow:
         self._anim = 0                 # contador de frame del sprite
         self.anim_divisor = 1          # 1 nativa, mayor mas lento, 0 quieto
         self.sprite_h = 220            # altura objetivo del sprite en px
+        self._prop = None              # accesorio (botella) al lado de la mascota
+        self._prop_key = None
         self._sprite_cache = {}        # ruta -> Sprite (evita recargar el GIF)
         self._bubble_text = ""
         self._bubble_until = 0.0
@@ -108,8 +135,15 @@ class PetWindow:
                                 bg=TRANSPARENT, highlightthickness=0, bd=0)
         self.canvas.pack()
 
-        self._font = tkfont.Font(family="Segoe UI", size=10)
-        self._font_bold = tkfont.Font(family="Segoe UI", size=10, weight="bold")
+        # Fuente divertida para las burbujas. Comic Sans MS existe en todo
+        # Windows; si faltara, tkinter cae a la de sistema.
+        self._font = tkfont.Font(family="Comic Sans MS", size=8)
+        self._font_bold = tkfont.Font(family="Comic Sans MS", size=8, weight="bold")
+        # Fuente mas pequena para el roster de agentes.
+        self._font_roster = tkfont.Font(family="Comic Sans MS", size=8)
+        self._font_roster_bold = tkfont.Font(family="Comic Sans MS", size=8, weight="bold")
+        # Fuente grande solo para la nota musical de atencion.
+        self._font_excl = tkfont.Font(family="Comic Sans MS", size=26, weight="bold")
 
         # El cuerpo vive en la esquina inferior derecha del canvas.
         self.body_cx = CANVAS_W - MARGIN - BODY_W / 2
@@ -126,11 +160,13 @@ class PetWindow:
     def set_pack(self, pack):
         self.pack = pack
         self._sprite_cache = {}   # otra mascota: descartar sus sprites
+        self._prop = None
+        self._prop_key = None
 
     def set_mood(self, mood):
         self.mood = mood
 
-    def show_bubble(self, text, now, seconds=6.0):
+    def show_bubble(self, text, now, seconds=8.0):
         if text:
             self._bubble_text = text
             self._bubble_until = now + seconds
@@ -138,15 +174,37 @@ class PetWindow:
     def set_roster(self, rows):
         self._roster = rows
 
+    def _work_area(self):
+        # Area de trabajo real de Windows (sin la barra de tareas). Tk a veces
+        # reporta mal el tamano de pantalla al arrancar y mandaba la mascota
+        # fuera de vista; ctypes lo da bien y de forma estable.
+        try:
+            import ctypes
+
+            class R(ctypes.Structure):
+                _fields_ = [("l", ctypes.c_long), ("t", ctypes.c_long),
+                            ("r", ctypes.c_long), ("b", ctypes.c_long)]
+            wa = R()
+            if ctypes.windll.user32.SystemParametersInfoW(0x0030, 0,
+                                                          ctypes.byref(wa), 0) \
+               and wa.r > 100 and wa.b > 100:
+                return wa.l, wa.t, wa.r, wa.b
+        except Exception:
+            pass
+        self.root.update_idletasks()
+        return 0, 0, self.root.winfo_screenwidth(), self.root.winfo_screenheight()
+
     def place_bottom_right(self, position=None):
-        sw = self.root.winfo_screenwidth()
-        sh = self.root.winfo_screenheight()
+        l, t, r, b = self._work_area()
         if position:
             x, y = position
         else:
-            x = sw - CANVAS_W
-            y = sh - CANVAS_H - 40   # deja hueco sobre la barra de tareas
-        self.root.geometry(f"{CANVAS_W}x{CANVAS_H}+{int(x)}+{int(y)}")
+            x = r - CANVAS_W - 6
+            y = b - CANVAS_H - 6     # b ya excluye la barra de tareas
+        # Clamp de seguridad: nunca dejar la ventana fuera de la pantalla.
+        x = max(l, min(int(x), r - CANVAS_W))
+        y = max(t, min(int(y), b - CANVAS_H))
+        self.root.geometry(f"{CANVAS_W}x{CANVAS_H}+{x}+{y}")
 
     def render(self, now):
         self.phase += 0.05
@@ -252,11 +310,57 @@ class PetWindow:
         c.create_oval(lens_x - 3.2, lens_y - 3.2, lens_x - 0.8, lens_y - 0.8,
                       fill=self._dim("#FFFFFF", 0.85 * glow), outline="")
 
-        # Signo de admiracion cuando te necesita.
+        # Nota musical cuando te necesita. Contorno claro para que el negro
+        # tenga bordes nitidos contra la ventana transparente (si no, el
+        # antialias mezcla negro con el magenta de fondo y sale rosado).
         if self.mood == Mood.ATTENTION:
             ex = tx1 + 6
             ey = ty0 - 6
-            c.create_text(ex, ey, text="!", fill=accent, font=self._font_bold)
+            self._note(ex, ey, 18)
+
+    def _note(self, x, y, size):
+        # Nota negra dibujada con figuras, NO con texto. El texto de Tk usa
+        # ClearType (subpixeles de color) y sobre la ventana transparente sus
+        # bordes quedan con aura rosada/cian. Las figuras del canvas no se
+        # antialiasan en Windows: borde duro y limpio contra el color-key.
+        c = self.canvas
+        ink = "#101317"
+        s = float(size)
+        hrx, hry = s * 0.28, s * 0.22
+        hcx, hcy = x - s * 0.06, y + s * 0.26
+        sx = hcx + hrx * 0.9                 # plica pegada al lado derecho
+        top = y - s * 0.46
+        sw = max(2, int(round(s * 0.13)))
+        c.create_line(sx, hcy, sx, top, fill=ink, width=sw, capstyle=tk.PROJECTING)
+        c.create_polygon(
+            sx, top,
+            sx + s * 0.32, top + s * 0.16,
+            sx + s * 0.28, top + s * 0.42,
+            sx, top + s * 0.22,
+            fill=ink, outline="")
+        c.create_oval(hcx - hrx, hcy - hry, hcx + hrx, hcy + hry,
+                      fill=ink, outline="")
+
+    def _coin(self, x, y, size):
+        # Moneda dorada con signo de pesos, tambien solo con figuras (ver _note).
+        c = self.canvas
+        ink = "#101317"
+        gold, gold_dark = "#F5C518", "#C9930A"
+        r = float(size) * 0.5
+        ow = max(2, int(round(r * 0.14)))
+        c.create_oval(x - r, y - r, x + r, y + r, fill=gold, outline=ink, width=ow)
+        ri = r * 0.74
+        c.create_oval(x - ri, y - ri, x + ri, y + ri, fill=gold, outline=gold_dark,
+                      width=max(1, int(round(r * 0.1))))
+        # "$": una S suave (spline) y la barra vertical
+        sw = max(2, int(round(r * 0.16)))
+        a, b = r * 0.30, r * 0.42
+        c.create_line(x + a, y - b * 0.7,
+                      x, y - b, x - a, y - b * 0.55,
+                      x, y, x + a, y + b * 0.55,
+                      x, y + b, x - a, y + b * 0.7,
+                      fill=ink, width=sw, smooth=True, capstyle=tk.ROUND)
+        c.create_line(x, y - b * 1.25, x, y + b * 1.25, fill=ink, width=sw, capstyle=tk.ROUND)
 
     def _leg(self, top_x, bot_x, top_y):
         c = self.canvas
@@ -300,17 +404,45 @@ class PetWindow:
         c.create_oval(cx - w * 0.28, base - 4, cx + w * 0.28, base + 6,
                       fill="#0A0C10", outline="")
         c.create_image(cx, base + 4, anchor="s", image=frame)
+        self._draw_prop(cx - w / 2, base)
         if self.mood == Mood.ATTENTION:
-            c.create_text(cx + w / 2 - 4, base - h + 6, text="!",
-                          fill=accent_hex(self.mood, self.pack), font=self._font_bold)
+            # Icono proporcional al sprite. Por defecto la nota de la llama (a
+            # 150px daba size 30 y offset +6, posicion aprobada por Catalina);
+            # cada pack puede cambiar icono y posicion en pet.json ("attention").
+            att = getattr(self.pack, "attention", {}) or {}
+            ex = cx + w * att.get("x", 0.08)
+            ey = base - h + h * att.get("y", 0.04)
+            size = h * att.get("size", 0.2)
+            if att.get("icon") == "coin":
+                self._coin(ex, ey, size)
+            else:
+                self._note(ex, ey, size)
+
+    def _draw_prop(self, pet_left, base):
+        # Accesorio (la botella) parado en el piso, a la izquierda de la mascota.
+        path = getattr(self.pack, "prop", None)
+        if not path:
+            return
+        if self._prop_key != path:
+            self._prop = Sprite(path, target_h=126)
+            self._prop_key = path
+        if not self._prop:
+            return
+        img = self._prop.frame(0)
+        pw = img.width()
+        px = pet_left + 18 - pw / 2   # pegada a la llama (solapa un poco su lana)
+        self.canvas.create_oval(px - pw * 0.4, base - 3, px + pw * 0.4, base + 5,
+                                fill="#0A0C10", outline="")
+        self.canvas.create_image(px, base + 4, anchor="s", image=img)
 
     # --- burbuja y roster ---------------------------------------------------
 
     def _draw_bubble(self, text):
         c = self.canvas
+        accent = accent_hex(self.mood, self.pack)
         anchor_x, anchor_y = self._bubble_anchor
-        pad = 10
-        maxw = 300
+        pad = 12
+        maxw = 320        # mas ancho: burbuja rectangular en vez de cuadrada
         # Crear el texto primero para medirlo, luego el globo detras.
         t = c.create_text(0, 0, text=text, anchor="nw", width=maxw,
                           fill=BUBBLE_FG, font=self._font)
@@ -321,11 +453,25 @@ class PetWindow:
         by1 = anchor_y
         bx0 = bx1 - w
         by0 = by1 - h
+        # Clamp: el globo nunca se sale del canvas (por eso a veces se cortaba).
+        margin = 6
+        if bx0 < margin:
+            d = margin - bx0
+            bx0 += d
+            bx1 += d
+        if by0 < margin:
+            d = margin - by0
+            by0 += d
+            by1 += d
         c.delete(t)
-        self._round_rect(bx0, by0, bx1, by1, 10, fill=BUBBLE_BG, outline=STEEL_DARK)
-        # Colita hacia la mascota.
-        c.create_polygon(bx1 - 22, by1 - 1, bx1 - 6, by1 - 1, bx1 - 4, by1 + 12,
+        # Sombra suave detras del globo para despegarlo del fondo.
+        self._round_rect(bx0 + 3, by0 + 4, bx1 + 3, by1 + 4, 12, fill="#120C18",
+                         outline="")
+        # Colita hacia la mascota (debajo, para que el borde la tape limpio).
+        c.create_polygon(bx1 - 26, by1 - 2, bx1 - 8, by1 - 2, bx1 - 6, by1 + 14,
                          fill=BUBBLE_BG, outline="")
+        self._round_rect(bx0, by0, bx1, by1, 12, fill=BUBBLE_BG,
+                         outline=accent, width=2)
         c.create_text(bx0 + pad, by0 + pad, text=text, anchor="nw", width=maxw,
                       fill=BUBBLE_FG, font=self._font)
 
@@ -333,23 +479,37 @@ class PetWindow:
         c = self.canvas
         rows = self._roster[:6]
         pad = 10
-        line_h = 18
-        w = 260
+        line_h = 13
+        icon_w = 16   # ancho del punto de color + su hueco antes del nombre
+        gap = 10      # hueco fijo entre el nombre y el estado
+        # Ancho de la caja segun el contenido real (medido, no fijo): la fila
+        # mas larga (nombre + estado) manda, para que el texto nunca se salga.
+        max_row_w = self._font_roster_bold.measure("Agentes")
+        row_texts = []
+        for r in rows:
+            status = f"{r['doing']}  ({r['steps']})"
+            name_w = self._font_roster_bold.measure(r["workspace"])
+            status_w = self._font_roster.measure(status)
+            max_row_w = max(max_row_w, icon_w + name_w + gap + status_w)
+            row_texts.append((r, status, name_w))
+        w = min(pad * 2 + max_row_w, 420)
         h = pad * 2 + line_h * (len(rows) + 1)
         bx1, by1 = self._bubble_anchor
         bx0 = bx1 - w
         by0 = by1 - h
         self._round_rect(bx0, by0, bx1, by1, 10, fill=BUBBLE_BG, outline=STEEL_DARK)
         c.create_text(bx0 + pad, by0 + pad, anchor="nw", fill=STEEL,
-                      font=self._font_bold, text="Agentes")
+                      font=self._font_roster_bold, text="Agentes")
         y = by0 + pad + line_h
-        for r in rows:
+        for r, status, name_w in row_texts:
             dot = "#FA8C33" if r["attention"] else accent_hex(
                 Mood.WORKING if r["doing"] not in ("en reposo",) else Mood.IDLE, self.pack)
             c.create_oval(bx0 + pad, y + 4, bx0 + pad + 8, y + 12, fill=dot, outline="")
-            label = f"{r['workspace']}  {r['doing']}  ({r['steps']})"
-            c.create_text(bx0 + pad + 16, y, anchor="nw", fill=BUBBLE_FG,
-                          font=self._font, text=label)
+            name_x = bx0 + pad + icon_w
+            c.create_text(name_x, y, anchor="nw", fill=STEEL,
+                          font=self._font_roster_bold, text=r["workspace"])
+            c.create_text(name_x + name_w + gap, y, anchor="nw", fill=BUBBLE_FG,
+                          font=self._font_roster, text=status)
             y += line_h
 
     def _round_rect(self, x0, y0, x1, y1, r, **kw):

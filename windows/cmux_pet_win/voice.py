@@ -30,7 +30,8 @@ _ALLOWED = set().union(*KINDS.values())
 
 class Pack:
     def __init__(self, pet_id, name, accents, fallback, persona, language,
-                 renderer, directory=None, sprites=None):
+                 renderer, directory=None, sprites=None, prop=None,
+                 attention=None):
         self.id = pet_id
         self.name = name
         self.accents = accents          # {mood: (r,g,b)} normalizado
@@ -40,6 +41,10 @@ class Pack:
         self.renderer = renderer        # "vector:droid" | "vector:llama" | "sprites"
         self.dir = directory            # carpeta del pack, para resolver sprites
         self.sprites = sprites or {}    # {mood|default: ruta absoluta al png/gif}
+        self.prop = prop                # accesorio (PNG) que se dibuja al lado
+        # icono de "necesita atencion" sobre el sprite: {icon: note|coin, x, y, size}
+        # (x, y, size relativos al ancho/alto del sprite)
+        self.attention = attention or {}
 
 
 def load_pack(pack_dir: Path) -> Pack:
@@ -80,8 +85,24 @@ def load_pack(pack_dir: Path) -> Pack:
         if p.exists() and str(p).startswith(str(pack_dir.resolve())):
             sprites[mood] = str(p)
 
+    prop = None
+    rel = manifest.get("prop")
+    if isinstance(rel, str) and ".." not in rel:
+        p = (pack_dir / rel).resolve()
+        if p.exists() and str(p).startswith(str(pack_dir.resolve())):
+            prop = str(p)
+
+    attention = {}
+    raw_att = manifest.get("attention")
+    if isinstance(raw_att, dict):
+        if raw_att.get("icon") in ("note", "coin"):
+            attention["icon"] = raw_att["icon"]
+        for k in ("x", "y", "size"):
+            if isinstance(raw_att.get(k), (int, float)):
+                attention[k] = float(raw_att[k])
+
     return Pack(pet_id, name, accents, fallback, persona, language, renderer,
-                directory=pack_dir, sprites=sprites)
+                directory=pack_dir, sprites=sprites, prop=prop, attention=attention)
 
 
 def validate(raw: dict) -> dict:
