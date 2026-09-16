@@ -11,9 +11,11 @@ HOME = Path(os.path.expanduser("~")) / ".cmux-pet"
 CONFIG = HOME / "config.json"
 SHELL_LOG = HOME / "shell.jsonl"
 PID = HOME / "pet.pid"
+NOTEBOOK = HOME / "notebook.json"
 SPRITES = HOME / "sprites"
 VOICES = HOME / "voices"
 LOG = HOME / "pet.log"
+REMINDER_WAV = HOME / "reminder.wav"
 
 
 def ensure_home() -> None:

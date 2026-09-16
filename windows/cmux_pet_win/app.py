@@ -6,16 +6,32 @@
 # cual.
 
 import os
+import random
+import threading
 import time
 import tkinter as tk
 
-from . import paths, voice as voicemod
+from . import notebook as notebookmod
+from . import paths, sound, voice as voicemod, nowplaying
 from .config import Config
 from .events import Tailer
+from . import state as statemod
 from .state import StateMachine, Mood
 from .ui import PetWindow
 
 FRAME_MS = 40                      # ~25 fps: fluido y barato
+# Cada cuanto se molesta en mirar el archivo de la libreta. El intervalo de
+# cada recordatorio es propio de cada tarea (ver notebook.due_todo_reminders);
+# esto solo evita leer el JSON del disco en cada uno de los ticks de 40ms.
+TODO_SCAN_SECONDS = 30
+
+# Frases para anunciar lo que suena en Spotify. Encajan con su onda de DJ.
+SONG_LINES = [
+    "Ahora suena: {t}, de {a}. Buen tema.",
+    "Mmm, {a} con {t}. Subele.",
+    "Sonando {t}, de {a}. Este me gusta.",
+    "{a}: {t}. Perfecto para programar.",
+]
 
 
 class App:
@@ -23,6 +39,7 @@ class App:
         paths.ensure_home()
         self.root = root
         self.config = config or Config.load()
+        statemod.set_workspace_aliases(self.config.get("workspaceAliases"))
         self.sm = StateMachine()
         self.tailer = tailer or Tailer(paths.SHELL_LOG)
 
@@ -31,6 +48,14 @@ class App:
 
         self.last_cwd = None
         self._last_narrate = 0.0
+        self._notebook = None
+        self._last_todo_scan = 0.0
+
+        # Spotify (opcional): lee que suena en Windows y lo anuncia al cambiar.
+        self._np = nowplaying.Poller()
+        self._np_last = None
+        if self.config.get("spotify", True):
+            self._np.start()
 
         self.window = PetWindow(
             root, self.pack,
@@ -68,6 +93,8 @@ class App:
         for ev in self.tailer.read_new():
             self._handle(ev, now)
         self._maybe_narrate(now)
+        self._maybe_song(now)
+        self._maybe_todo_reminder(now)
         mood = self.sm.mood(now)
         self.window.set_mood(mood)
         self.window.set_roster(self.sm.roster(now))
@@ -98,16 +125,68 @@ class App:
             if text:
                 self.window.show_bubble(text, now)
 
+    def _maybe_todo_reminder(self, now):
+        # Cada tarea de la lista trae su propio intervalo y su propio on/off
+        # (se configuran desde la libreta, click en el textito de "cada Xh"
+        # junto a cada renglon). Aqui solo se pregunta cuales ya se cumplieron.
+        if self.config["quiet"]:
+            return
+        if now - self._last_todo_scan < TODO_SCAN_SECONDS:
+            return
+        self._last_todo_scan = now
+        notebook_open = self._notebook is not None and self._notebook.win.winfo_exists()
+        if notebook_open:
+            # Sobre el mismo objeto en memoria de la ventana abierta: si
+            # leyeramos/escribieramos el archivo aparte, el siguiente guardado
+            # de la libreta (con su copia vieja) pisaria el last_reminded y el
+            # aviso saldria de nuevo enseguida en vez de respetar el intervalo.
+            due, changed = notebookmod.scan_due_items(self._notebook.pages, now)
+            if changed:
+                self._notebook.save()
+        else:
+            due = notebookmod.due_todo_reminders(now)
+        if not due:
+            return
+        self._play_reminder_sound()
+        self.window.show_bubble(self._todo_reminder_phrase(due), now, seconds=10.0)
+
+    def _play_reminder_sound(self):
+        # Campanita suave sintetizada (ver sound.py). Antes eran dos Beep() de
+        # onda cuadrada que aturdian; Catalina pidio algo tranquilo.
+        sound.play_reminder()
+
+    def _todo_reminder_phrase(self, due):
+        if len(due) == 1:
+            return f"Che, todavia te falta: {due[0]}."
+        preview = ", ".join(due[:3])
+        extra = f" y {len(due) - 3} mas" if len(due) > 3 else ""
+        return f"Recordatorio: te quedan {len(due)} pendientes ({preview}{extra})."
+
+    def _maybe_song(self, now):
+        # Anuncia la cancion de Spotify solo cuando cambia (para no ser pesada).
+        if self.config["quiet"]:
+            return
+        np = self._np.latest
+        if not np or not np.get("playing") or not np.get("title"):
+            return
+        key = (np["title"], np["artist"])
+        if key == self._np_last:
+            return
+        self._np_last = key
+        text = random.choice(SONG_LINES).format(t=np["title"],
+                                                a=np["artist"] or "alguien")
+        self.window.show_bubble(text, now, seconds=7.0)
+
     # --- acciones de la vista ----------------------------------------------
 
     def _on_click(self):
-        # En cmux el click salta al workspace; aqui, sin control de la terminal,
-        # el analogo honesto es abrir la carpeta del ultimo aviso en Explorer.
-        if self.last_cwd and os.path.isdir(self.last_cwd):
-            try:
-                os.startfile(self.last_cwd)   # noqa: solo existe en Windows
-            except OSError:
-                pass
+        # Click en la mascota: si la libreta ya esta abierta, la cierra
+        # (guardando primero); si no, la abre. Un solo click hace las dos cosas.
+        if self._notebook is not None and self._notebook.win.winfo_exists():
+            self._notebook._on_close()
+            self._notebook = None
+        else:
+            self._notebook = notebookmod.NotebookWindow(self.root)
 
     def _on_moved(self, x, y):
         self.config["position"] = [x, y]
@@ -135,11 +214,24 @@ class App:
             mark = "  *" if val == cur else ""
             items.append((label + mark, lambda v=val: self._set_dance(v)))
         items.append(("-", None))
+        if nowplaying.available():
+            sp_label = "Spotify: si" if self.config.get("spotify", True) else "Spotify: no"
+            items.append((sp_label, self._toggle_spotify))
         quiet_label = "Reactivar avisos" if self.config["quiet"] else "Silenciar avisos"
         items.append((quiet_label, self._toggle_quiet))
         items.append(("-", None))
         items.append(("Salir", self._quit))
         return items
+
+    def _toggle_spotify(self):
+        on = not self.config.get("spotify", True)
+        self.config["spotify"] = on
+        self.config.save()
+        if on:
+            self._np.start()
+        else:
+            self._np.stop()
+        self.window.on_menu["items"] = self._menu_items()
 
     def _set_dance(self, value):
         self.config["animSlowdown"] = value
@@ -163,6 +255,7 @@ class App:
         self.window.on_menu["items"] = self._menu_items()
 
     def _quit(self):
+        self._np.stop()
         self.root.destroy()
 
     # --- soporte ------------------------------------------------------------

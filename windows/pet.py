@@ -85,9 +85,24 @@ def selftest() -> int:
     return 0 if ok else 1
 
 
+def _make_dpi_aware() -> None:
+    # Sin esto, Tk puede reportar un tamano de pantalla escalado/erroneo al
+    # arrancar y la ventana termina fuera de vista (bug de la mascota que se iba
+    # a la esquina superior). Marcar el proceso DPI-aware lo estabiliza.
+    import ctypes
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
+
 def main() -> int:
     if "--selftest" in sys.argv:
         return selftest()
+    _make_dpi_aware()
     root = tk.Tk()
     App(root).run()
     return 0

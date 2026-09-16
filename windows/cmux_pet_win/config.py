@@ -11,6 +11,8 @@ DEFAULTS = {
     "position": None,          # [x, y] recordado tras arrastrar; None = auto
     "animSlowdown": 1,         # velocidad del sprite: 1 nativa, mayor mas lento, 0 quieto
     "spriteHeight": 220,       # altura del sprite en px (para packs con GIF/PNG)
+    "spotify": True,           # anunciar la cancion que suena (necesita winrt)
+    "workspaceAliases": {},    # carpeta -> nombre corto para roster y burbujas
 }
 
 
