@@ -2,7 +2,7 @@
 
 import Foundation
 
-public let cmuxPetVersion = "0.2.1"
+public let cmuxPetVersion = "0.2.2"
 
 let fm = FileManager.default
 let homeURL = fm.homeDirectoryForCurrentUser

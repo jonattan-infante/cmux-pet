@@ -3,7 +3,22 @@
 Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Versionado semántico.
 
+## [0.2.2] — 2026-09-17
+
+### Corregido
+
+- `release.yml` fallaba en `check-tag.sh` con "es un tag ligero" para todo tag
+  real: GitHub Actions entrega el ref del tag apuntando al commit que señala,
+  no al objeto tag anotado, así que `git cat-file -t` lo veía como ligero. Se
+  agrega `git fetch --tags --force origin` tras el checkout, antes de
+  verificar. Encontrado publicando `v0.2.1`.
+
 ## [0.2.1] — 2026-09-17
+
+**No se publicó.** El tag existe en GitHub, anotado y firmado, pero
+`release.yml` falló antes de crear el release por el bug de arriba. La versión
+efectiva es `0.2.2`; este tag se queda como está, sin borrarse
+(`docs/reference/tags.md`).
 
 ### Agregado
 

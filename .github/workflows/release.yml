@@ -25,6 +25,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      # GitHub Actions entrega el tag como el COMMIT al que apunta, no como el
+      # objeto tag anotado: `git cat-file -t $GITHUB_REF_NAME` da "commit" tras
+      # el checkout normal, y check-tag.sh lo rechaza como si fuera un tag
+      # ligero. Volver a traer los tags de verdad lo corrige. Encontrado y
+      # verificado al publicar v0.2.1: docs/adr/0006 y CHANGELOG [0.2.2].
+      - name: Recuperar el tag anotado (no el commit que entrega el checkout)
+        run: git fetch --tags --force origin
+
       - name: El tag cumple docs/reference/tags.md
         run: ./scripts/check-tag.sh "$GITHUB_REF_NAME" --on origin/main
 
@@ -93,7 +101,6 @@ jobs:
           name: macos
           path: dist
 
-      # Las notas son la seccion del CHANGELOG de esta version, tal cual.
       # Las notas son la seccion del CHANGELOG, la misma que lleva el tag.
       - name: Notas desde el CHANGELOG
         run: |
