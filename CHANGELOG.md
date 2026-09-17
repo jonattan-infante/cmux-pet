@@ -3,7 +3,7 @@
 Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Versionado semántico.
 
-## [Unreleased]
+## [0.2.1] — 2026-09-17
 
 ### Agregado
 
@@ -18,6 +18,11 @@ Versionado semántico.
 ### Cambiado
 
 - `make tag` firma el tag con SSH y pone las notas del CHANGELOG en el mensaje.
+
+### Documentación
+
+- Las reglas de tags son obligatorias para cualquier agente de IA que trabaje
+  en el repositorio, con sección propia en `CLAUDE.md`, no solo una mención.
 
 ## [0.2.0] — 2026-09-17
 
