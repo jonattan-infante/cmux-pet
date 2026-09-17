@@ -74,6 +74,20 @@ class TailerTests(unittest.TestCase):
             got = t.read_new()
             self.assertEqual([e["event"] for e in got], ["Stop"])
 
+    def test_parse_is_injectable(self):
+        # Otra fuente (p.ej. el plugin-puente de OpenCode) reusa Tailer con su
+        # propio formato de linea, sin duplicar la logica de seguimiento.
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "opencode.jsonl"
+            p.write_text("", encoding="utf-8")
+            t = Tailer(p, parse=lambda line: {"event": "Stop", "session": "oc",
+                                              "agent": "OpenCode", "raw": line.strip()})
+            with p.open("a", encoding="utf-8") as f:
+                f.write("cualquier-formato\n")
+            got = t.read_new()
+            self.assertEqual(got, [{"event": "Stop", "session": "oc",
+                                    "agent": "OpenCode", "raw": "cualquier-formato"}])
+
 
 if __name__ == "__main__":
     unittest.main()

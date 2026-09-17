@@ -98,6 +98,21 @@ occurredAt    : fecha
 5. Si el orquestador termina con cero fuentes activas, avisa una vez
    ("No tengo ninguna fuente de eventos activa.") en vez de quedarse mudo.
 
+## Del lado de Windows
+
+`windows/lucy_win/events.py::Tailer` ya cumplía casi todo el contrato antes de
+que existiera este documento: solo le faltaba que el parser fuera inyectable
+(`Tailer(path, parse=...)`, default `parse_line`) para poder reusar la misma
+clase con otra fuente que escriba líneas en su propio formato. No hace falta
+una clase base: en Python cualquier objeto con `read_new() -> list[dict]` es
+un `EventSource` válido por duck-typing — `App.__init__(sources=[...])`
+sostiene la lista, igual que `PetController.sources` en Swift.
+
+El campo `agent` lo pone la fuente en el primer evento de una sesión y
+`state.py:Session` lo conserva (antes era una constante `"Claude"` fija en
+`_agent()`); así el roster y las burbujas pueden decir "OpenCode" sin
+duplicar `state.py` cuando llegue esa fuente.
+
 ## Para verificar
 
 `Tests/LucyGlowKitTests/CmuxEventSourceTests.swift` y
@@ -106,3 +121,11 @@ contra payloads literales, sin lanzar ningún proceso.
 `PetControllerIngestTests.swift` prueba `ingest(_:)` con `NormalizedEvent`
 sintéticos y una fuente falsa (`FakeEventSource`), incluido el caso de cero
 fuentes activas y el aviso único por fuente caída.
+
+Del lado de Python, `test_events.py::test_parse_is_injectable` prueba el
+`parse` inyectable y `test_state.py` prueba que `agent` se pone una vez y se
+conserva. No hay un `test_app.py` que instancie `App` con un `tk.Tk()` real:
+ningún test de este runtime toca Tk hoy (es deliberado, para no depender de
+una sesión gráfica al correr `make verify`), y el bucle de `tick()` que
+reparte sobre `self.sources` es tres líneas sin lógica propia — lo que
+importa (`Tailer.read_new`, `StateMachine.ingest`) ya está cubierto.

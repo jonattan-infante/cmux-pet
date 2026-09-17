@@ -108,15 +108,33 @@ make verify   -> compila + 119 tests Swift (35 nuevos: CmuxEventSourceTests,
                  15 integridad + 11 mascotas + 19 release-tooling + 51 Python
 ```
 
-Pendiente (F3 en `EXECUTION-PLAN.md`): PR2 generaliza `Tailer` en Windows
-(parser inyectable + campo `agent`), PR3 agrega OpenCode vía un
-plugin-puente, PR4 deja un skeleton de `WmuxEventSource` sin registrar hasta
-verificar el protocolo real de wmux (documentación pública incompleta).
+PR2 (Windows) también entregado, mismo contrato: `Tailer(path, parse=...)`
+con default retrocompatible, `App(sources=[...])` reemplaza `tailer=`, y
+`state.py:Session.agent` reemplaza la constante `_agent()` que devolvía
+siempre `"Claude"`.
+
+```
+cd windows && python3 -m unittest discover -s tests -p "test_*.py"
+  -> 54 tests, 0 fallos (51 + 3 nuevos)
+```
+
+Decisión tomada en PR2, no en el plan original: **no se agregó
+`test_app.py`**. Verificado que ningún test de `windows/tests/` instancia
+`tk.Tk()` (es deliberado en este runtime); crear uno solo para el `tick()`
+de tres líneas que reparte sobre `self.sources` habría sido la primera
+dependencia de Tk en la suite, para una lógica ya cubierta por
+`test_events.py`/`test_state.py`.
+
+Pendiente (F3 en `EXECUTION-PLAN.md`): PR3 agrega OpenCode vía un
+plugin-puente en los dos runtimes, PR4 deja un skeleton de
+`WmuxEventSource` sin registrar hasta verificar el protocolo real de wmux
+(documentación pública incompleta).
 
 ## Próximo paso
 
-**Seguir con PR2** (generalizar `Tailer`/`app.py` en Windows, mismo contrato
-de `docs/reference/event-source.md`) antes de PR3 (OpenCode).
+**Seguir con PR3** (plugin-puente de OpenCode: `bridges/opencode/`,
+instaladores de las dos plataformas, `OpenCodeEventSource`/`opencode_bridge.py`)
+antes de PR4 (skeleton de wmux).
 
 Pendiente de antes, sin resolver en esta sesión: **registrar la llave como
 signing key en GitHub** (B14), para que los tags aparezcan "Verified" en vez
