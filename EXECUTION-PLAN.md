@@ -53,7 +53,10 @@ estado es "por verificar".
 | Aviso de versión nueva, mismo contrato en macOS y Windows | `docs/reference/versioning.md`; 14 tests en `UpdateTests.swift` y 17 en `test_update.py` con los mismos casos; punta a punta con `CMUX_PET_UPDATE_URL=file://…` en la máquina real: `aviso: [info] … 9.9.9` una sola vez, `update.json` con `announced` (ver claude-progress) |
 | `cmux-pet update [--check]` y `python install.py --update` | tras publicar `v0.2.0`: `update --check` → `Estás en la última versión publicada`, salida 0. `--update` en Windows solo probado por lectura ⚠️ 2026-09-17 |
 | Primer release publicado por tag | `make tag` → `v0.2.0`; run 35236336097 de `release.yml`: `el tag dice lo mismo que el repo`, `binario de macOS`, `publicar el release` en verde; release con `cmux-pet-0.2.0-macos-arm64.tar.gz` y `.sha256` |
-| Reglas de tags con verificación y protección | `docs/reference/tags.md`; `scripts/check-tag.sh` (19 casos en `test-release-tooling.sh`, en el gate y en CI); `release.yml` lo exige con `--on origin/main`; ruleset `tags de version` (id 23606182) sobre `refs/tags/v*` |
+| Reglas de tags con verificación y protección | `docs/reference/tags.md`; `scripts/check-tag.sh` (19 casos en `test-release-tooling.sh`, en el gate y en CI); `release.yml` lo exige con `--on origin/main`; ruleset `tags de version` (id 23606182) sobre `refs/tags/v*`, bypass de administrador probado en `v0.2.1`/`v0.2.2` |
+| Reglas de tags obligatorias en `CLAUDE.md` para cualquier agente de IA | sección propia con cinco prohibiciones (PR #7); 174 líneas, dentro del límite de 200 |
+| `v0.2.2` publicado con release real | run de `release.yml` en verde: `el tag dice lo mismo que el repo`, `binario de macOS`, `publicar el release`; `gh release view v0.2.2` → `draft=false prerelease=false`, assets con tarball y sha256 |
+| `cmux-pet update` de punta a punta contra un release real | máquina del autor: `0.2.0` instalado → `update --check` decía "Hay una versión nueva: 0.2.2" → `cmux-pet update` clonó el release y quedó en `cmux-pet 0.2.2` → `update --check` dice "Estás en la última versión publicada" |
 | Versión y notas propuestas desde los commits | `make next-version` y `make release-notes` (Conventional Commits → Keep a Changelog), probados en el mismo test |
 | Instalador de macOS clona el último release | `install.sh`: resuelve `tag_name` de `releases/latest`, cae a `main` y lo dice; `bash -n` ok. **Sin release publicado aún, la rama `main` es lo que instala** ⚠️ 2026-09-17 |
 
@@ -63,7 +66,6 @@ estado es "por verificar".
 |---|---|---|---|
 | F1 | Mascotas con arte propio | el renderer `sprites` funciona, pero ningún pack incluido lo usa | hacer un pack de ejemplo con sprites, aunque sean formas simples, para que se vea el camino |
 | F2 | Más renderers integrados | hay `vector:droid`, `vector:ball` y `vector:sage` | portar `ball` y `sage` al Canvas de Windows |
-| F4 | Reglas de tags aplicadas a un tag real | `check-tag.sh` y el ruleset existen; `v0.2.0` es anterior a las reglas | el primer `make tag` de `v0.3.0` prueba firma, notas en el mensaje, `check-tag` en CI y el bypass del ruleset |
 
 
 ## Riesgos
@@ -77,8 +79,9 @@ estado es "por verificar".
 | R5 | Un pack del marketplace trae arte de un personaje con dueño | problema legal para el autor y para el índice | regla explícita en `docs/marketplace.md`, revisión en el PR, y se quita del índice al detectarlo. **Depende de revisión humana** ⚠️ 2026-07-31 |
 | R6 | Un pack malicioso apunta sprites fuera de su carpeta | leer archivos del usuario | `..` prohibido en rutas, cubierto por test. Un pack no ejecuta código: solo aporta texto e imágenes |
 | R7 | El registro crece y el `git clone --depth 1` por install se vuelve costoso | instalación lenta | hoy son 2 entradas; si crece, cachear o servir tarballs (B11) |
-| R8 | `release.yml` falla en un tag | no hay release y nadie recibe el aviso; el instalador sigue en la última publicada | verificado con `v0.2.0`: los tres jobs en verde. Desde `v0.3.0` además corre `check-tag.sh`, que no se ha ejercido en CI ⚠️ 2026-09-17 |
-| R10 | El bypass del ruleset de tags no aplica al dueño y `make tag` no puede empujar | el tag queda en local; nada publicado | el error es visible en el push; se ajusta el ruleset y se reintenta. **Por verificar con `v0.3.0`** ⚠️ 2026-09-17 |
+| R8 | `release.yml` falla en un tag | no hay release y nadie recibe el aviso; el instalador sigue en la última publicada | ocurrió de verdad en `v0.2.1`: `check-tag.sh` en CI daba "tag ligero" por un artefacto de checkout de GitHub Actions (R11). Corregido y verificado en `v0.2.2` |
+| R10 | El bypass del ruleset de tags no aplica al dueño y `make tag` no puede empujar | el tag queda en local; nada publicado | verificado con `v0.2.1` y `v0.2.2`: GitHub reporta "Bypassed rule violations", el bypass del rol administrador funciona |
+| R11 | GitHub Actions entrega el ref de un tag apuntando al commit, no al objeto tag anotado | `check-tag.sh` en CI rechaza cualquier tag real como "ligero" | `git fetch --tags --force origin` tras el checkout, antes de verificar; documentado en `release.yml` y en el CHANGELOG de `0.2.2` |
 | R9 | La burbuja de actualización en Tk (Windows) no se ha visto en una máquina Windows real | el aviso podría no mostrarse aunque la lógica esté probada | la lógica pura tiene 17 tests y `Checker` está probado con `file://`; falta `--selftest` con `CMUX_PET_UPDATE_URL` en Windows ⚠️ 2026-09-17 |
 
 ## Backlog
