@@ -125,16 +125,22 @@ de tres líneas que reparte sobre `self.sources` habría sido la primera
 dependencia de Tk en la suite, para una lógica ya cubierta por
 `test_events.py`/`test_state.py`.
 
-Pendiente (F3 en `EXECUTION-PLAN.md`): PR3 agrega OpenCode vía un
-plugin-puente en los dos runtimes, PR4 deja un skeleton de
-`WmuxEventSource` sin registrar hasta verificar el protocolo real de wmux
-(documentación pública incompleta).
+PR4 (skeleton de `WmuxEventSource`) también entregado: `start()` llama
+`onUnavailable("wmux: protocolo no verificado, ver docs/adr/0008")` y nunca
+`onEvent`; no está en `makeEventSources()`. `WmuxEventSourceTests` (2 casos)
+fija ese contrato en código.
+
+Decisión explícita del autor: **PR3 (OpenCode) queda en espera**, sin
+implementar — no hay cómo probar el plugin-puente contra una instalación
+real de OpenCode, y el mapeo de eventos no se da por bueno sin esa prueba
+(ver docs/reference/event-source.md).
 
 ## Próximo paso
 
-**Seguir con PR3** (plugin-puente de OpenCode: `bridges/opencode/`,
-instaladores de las dos plataformas, `OpenCodeEventSource`/`opencode_bridge.py`)
-antes de PR4 (skeleton de wmux).
+Los cuatro PR planeados en `docs/adr/0008` están cerrados salvo OpenCode
+(F3 en `EXECUTION-PLAN.md`), que queda explícitamente pendiente de una
+instalación real donde probarlo. Sin próximo paso forzado: retomar F1/F2 del
+backlog o volver a F3 cuando haya cómo verificar OpenCode.
 
 Pendiente de antes, sin resolver en esta sesión: **registrar la llave como
 signing key en GitHub** (B14), para que los tags aparezcan "Verified" en vez

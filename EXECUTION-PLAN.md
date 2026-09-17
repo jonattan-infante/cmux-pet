@@ -61,6 +61,7 @@ estado es "por verificar".
 | Instalador de macOS clona el último release | `install.sh`: resuelve `tag_name` de `releases/latest`, cae a `main` y lo dice; `bash -n` ok. **Sin release publicado aún, la rama `main` es lo que instala** ⚠️ 2026-09-17 |
 | Contrato `EventSource` (PR1 de 4): cmux y shell detrás de un adapter, con la cobertura que faltaba | `docs/reference/event-source.md`, `docs/adr/0008`; `CmuxEventSource`/`ShellHookEventSource`/`FileTailer` nuevos; `PetController.ingest(_:)` reemplaza `handleCmuxEvent`/`handleShellEvent`. Cero cambio de comportamiento observable. 35 tests nuevos (`CmuxEventSourceTests` 15, `FileTailerTests` 3, `ShellHookEventSourceTests` 3, `PetControllerIngestTests` 14) — antes de este PR, `PetController`/`+Events`/`+Sources` no tenían ningún test. `make verify` → 119 tests Swift + 51 Python, todo verde |
 | `EventSource` en Windows (PR2 de 4): `Tailer` con parser inyectable y campo `agent` | `Tailer(path, parse=...)`, default `parse_line`; `App.__init__(sources=[...])` reemplaza `tailer=`; `state.py:Session.agent` reemplaza la constante `_agent()`. 3 tests nuevos (`test_parse_is_injectable`, dos en `test_state.py`) — sin `test_app.py`: ningún test de este runtime toca `tk.Tk()` y el `tick()` que reparte sobre `sources` no tiene lógica propia. `make test-windows` → 54 tests, 0 fallos |
+| Skeleton de `WmuxEventSource` (PR4 de 4) | `start()` llama `onUnavailable` y nunca `onEvent`; no está en `makeEventSources()`. 2 tests (`WmuxEventSourceTests`): avisa no-disponible sin emitir eventos, y no aparece en la lista por defecto. Decisión explícita: OpenCode (PR3) queda pendiente porque no hay cómo probar el plugin contra una instalación real |
 
 ## En vuelo
 
@@ -68,7 +69,7 @@ estado es "por verificar".
 |---|---|---|---|
 | F1 | Mascotas con arte propio | el renderer `sprites` funciona, pero ningún pack incluido lo usa | hacer un pack de ejemplo con sprites, aunque sean formas simples, para que se vea el camino |
 | F2 | Más renderers integrados | hay `vector:droid`, `vector:ball` y `vector:sage` | portar `ball` y `sage` al Canvas de Windows |
-| F3 | Fuentes nuevas sobre el contrato `EventSource` (PR3-4 de `docs/adr/0008`) | PR1 (Swift) y PR2 (Windows) entregados | PR3: plugin-puente de OpenCode en los dos runtimes; PR4: skeleton de `WmuxEventSource` |
+| F3 | OpenCode sobre el contrato `EventSource` (PR3 de `docs/adr/0008`) | PR1, PR2 y PR4 (wmux) entregados; PR3 en espera de poder probar el plugin contra una instalación real de OpenCode | escribir `bridges/opencode/lucyglow-bridge.js` y los dos adapters cuando haya cómo verificarlo |
 
 
 ## Riesgos

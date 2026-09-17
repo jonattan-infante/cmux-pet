@@ -153,7 +153,7 @@ que un pack está bien.
 | `Sources/LucyGlowKit/Voice/` | frases de la mascota activa y composición del prompt |
 | `Sources/LucyGlowKit/Views/` | renderer vectorial, sprites, burbuja, panel de estado |
 | `Sources/LucyGlowKit/Controller/EventSource.swift` | contrato `EventSource` y `NormalizedEvent` |
-| `Sources/LucyGlowKit/Controller/Sources/` | adapters: `CmuxEventSource`, `ShellHookEventSource` |
+| `Sources/LucyGlowKit/Controller/Sources/` | adapters: `CmuxEventSource`, `ShellHookEventSource`, `WmuxEventSource` (esqueleto) |
 | `Sources/LucyGlowKit/Controller/` | orquestador: ingiere eventos normalizados, decide mood y texto |
 | `Sources/LucyGlowKit/Support/` | rutas, puente con el CLI de cmux, tailer de archivos, formateo |
 | `pets/` | mascotas incluidas: `astro`, `gatito`, `cangrejo` y `llama` |
