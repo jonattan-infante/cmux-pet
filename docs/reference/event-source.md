@@ -62,6 +62,12 @@ una fuente a inventar algo que no tiene.
 `docs/reference/cmux-events.md` — `CmuxEventSource` no los emite hasta
 reverificar que cmux los reenvía bajo `--category agent`.
 
+⚠️ `WmuxEventSource` existe como esqueleto (`start()` llama `onUnavailable` y
+nunca `onEvent`) y no está registrada en `makeEventSources()`: wmux.org no
+documenta métodos RPC, categorías de evento ni forma de payload de su named
+pipe `\\.\pipe\wmux`, y no hay hoy un entorno Windows real donde verificarlo.
+Ver `docs/adr/0008`.
+
 ## Esquema de campos
 
 ```
