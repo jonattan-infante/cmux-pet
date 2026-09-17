@@ -8,7 +8,7 @@
 
 La primera versión traía un droide y nada más. Su dibujo estaba en `PetView`, su
 personalidad en una constante de `Voice.prompt`, y sus sprites en una carpeta fija
-`~/.cmux-pet/sprites/`. Cambiar de mascota era editar Swift y recompilar.
+`~/.lucy/sprites/`. Cambiar de mascota era editar Swift y recompilar.
 
 Eso pone un techo bajo: la parte divertida del producto — inventarle carácter a
 una mascota — quedaba reservada a quien sabe Swift y tiene el repo clonado.
@@ -39,7 +39,7 @@ puede inventar un estado nuevo, porque el orquestador no sabría cuándo usarlo.
 
 ## Consecuencias
 
-- **A favor:** crear una mascota es escribir un archivo de texto. `cmux-pet new`
+- **A favor:** crear una mascota es escribir un archivo de texto. `lucy new`
   genera un paquete válido y `persona.md` es el único archivo que hay que editar
   para que suene distinta.
 - **A favor:** el marketplace existe casi gratis. Un pack es una carpeta en un
@@ -50,7 +50,7 @@ puede inventar un estado nuevo, porque el orquestador no sabría cuándo usarlo.
   tercero, así que `PetPack.load` es código defensivo: rutas que no se escapen del
   paquete, colores bien escritos, sprites que existan. Cubierto por 21 tests.
 - **En contra:** una mascota puede quedar muda si no trae `phrases.json` y falla
-  la generación. Por eso `cmux-pet new` escribe frases de respaldo genéricas y
+  la generación. Por eso `lucy new` escribe frases de respaldo genéricas y
   `validate` avisa cuando faltan.
 - **En contra:** el renderer vectorial sigue siendo un droide. Un pack sin arte se
   ve como un droide con otros colores. Es honesto, pero limitado; más renderers
@@ -58,7 +58,7 @@ puede inventar un estado nuevo, porque el orquestador no sabría cuándo usarlo.
 
 ## Detalles que costaron pensarlos
 
-**Las frases generadas viven fuera del pack**, en `~/.cmux-pet/voices/<id>.json`.
+**Las frases generadas viven fuera del pack**, en `~/.lucy/voices/<id>.json`.
 Dos razones: actualizar o reinstalar un pack no debe borrar lo que Claude Code ya
 escribió, y un pack instalado desde el registro se trata como de solo lectura.
 

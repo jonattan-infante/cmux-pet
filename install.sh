@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Instalador de cmux-pet.
+# Instalador de lucy.
 #
-#   curl -fsSL https://raw.githubusercontent.com/jonattan-infante/cmux-pet/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/jonattan-infante/lucyglow/main/install.sh | bash
 #
 # O desde un clon:  ./install.sh --from-source
 # Para quitarlo:    ./install.sh --uninstall
 set -euo pipefail
 
-REPO_URL="https://github.com/jonattan-infante/cmux-pet.git"
-LATEST_URL="https://api.github.com/repos/jonattan-infante/cmux-pet/releases/latest"
-RAW_URL="https://raw.githubusercontent.com/jonattan-infante/cmux-pet/main/install.sh"
-PREFIX="${CMUX_PET_PREFIX:-$HOME/.cmux-pet}"
+REPO_URL="https://github.com/jonattan-infante/lucyglow.git"
+LATEST_URL="https://api.github.com/repos/jonattan-infante/lucyglow/releases/latest"
+RAW_URL="https://raw.githubusercontent.com/jonattan-infante/lucyglow/main/install.sh"
+PREFIX="${LUCY_PREFIX:-$HOME/.lucy}"
 ZSHRC="${ZDOTDIR:-$HOME}/.zshrc"
-SOURCE_LINE='source ~/.cmux-pet/shell/pet.zsh'
-MARKER='# asistente flotante de cmux (cmux-pet)'
+SOURCE_LINE='source ~/.lucy/shell/pet.zsh'
+MARKER='# asistente flotante de cmux (lucy)'
 
 bold() { printf '\033[1m%s\033[0m\n' "$1"; }
 info() { printf '  %s\n' "$1"; }
@@ -23,8 +23,8 @@ die()  { printf 'error: %s\n' "$1" >&2; exit 1; }
 # ---------------------------------------------------------------- desinstalar
 
 uninstall() {
-  bold "Desinstalando cmux-pet"
-  pkill -f "$PREFIX/bin/cmux-pet" 2>/dev/null || true
+  bold "Desinstalando lucy"
+  pkill -f "$PREFIX/bin/lucy" 2>/dev/null || true
   info "asistente detenido"
 
   # El launchd agent existio en versiones tempranas; se limpia por si quedo.
@@ -32,7 +32,7 @@ uninstall() {
   rm -f "$HOME/Library/LaunchAgents/com.jonattan.cmuxpet.plist"
 
   if [[ -f "$ZSHRC" ]] && grep -qF "$SOURCE_LINE" "$ZSHRC"; then
-    cp -p "$ZSHRC" "$ZSHRC.cmux-pet-backup.$(date +%Y%m%d-%H%M%S)"
+    cp -p "$ZSHRC" "$ZSHRC.lucy-backup.$(date +%Y%m%d-%H%M%S)"
     # Quita la linea y el comentario marcador que la precede.
     /usr/bin/sed -i '' "/^${MARKER//\//\\/}$/d" "$ZSHRC"
     /usr/bin/sed -i '' "\|^${SOURCE_LINE}$|d" "$ZSHRC"
@@ -52,9 +52,9 @@ uninstall() {
 
 # ------------------------------------------------------------------ requisitos
 
-bold "Instalando cmux-pet"
+bold "Instalando lucy"
 
-[[ "$(uname -s)" == "Darwin" ]] || die "cmux-pet solo corre en macOS"
+[[ "$(uname -s)" == "Darwin" ]] || die "lucy solo corre en macOS"
 
 command -v swift >/dev/null || die "falta Swift. Instala Xcode o las Command Line Tools:
     xcode-select --install"
@@ -71,12 +71,12 @@ if [[ "${1:-}" == "--from-source" ]]; then
   info "compilando desde $SRC"
 else
   command -v git >/dev/null || die "falta git"
-  SRC="$(mktemp -d)/cmux-pet"
+  SRC="$(mktemp -d)/lucy"
   # Se instala la ultima version PUBLICADA, no main: asi lo que corre coincide
   # con lo que la mascota anuncia. Ver docs/reference/versioning.md.
-  #   CMUX_PET_VERSION=v0.3.0  fija una version
-  #   CMUX_PET_VERSION=main    sigue la rama
-  REF="${CMUX_PET_VERSION:-}"
+  #   LUCY_VERSION=v0.3.0  fija una version
+  #   LUCY_VERSION=main    sigue la rama
+  REF="${LUCY_VERSION:-}"
   if [[ -z "$REF" ]]; then
     REF="$(curl -fsSL --max-time 10 -H 'Accept: application/vnd.github+json' "$LATEST_URL" 2>/dev/null \
       | /usr/bin/sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
@@ -96,16 +96,25 @@ cd "$SRC"
 info "compilando (la primera vez tarda un minuto)"
 swift build -c release >/dev/null 2>&1 || die "la compilacion falló. Corre 'swift build -c release' para ver por qué."
 
-BUILT="$(swift build -c release --show-bin-path)/cmux-pet"
+BUILT="$(swift build -c release --show-bin-path)/lucy"
 [[ -x "$BUILT" ]] || die "no encuentro el binario compilado en $BUILT"
 
 # ------------------------------------------------------------------ instalar
 
+# El producto se llamaba cmux-pet. Migrar en vez de empezar de cero: nadie
+# deberia perder su configuracion, sus mascotas o sus frases generadas solo
+# porque cambio de nombre a LucyGlow.
+LEGACY_PREFIX="$HOME/.cmux-pet"
+if [[ ! -d "$PREFIX" && -d "$LEGACY_PREFIX" ]]; then
+  mv "$LEGACY_PREFIX" "$PREFIX"
+  info "migrado $LEGACY_PREFIX -> $PREFIX"
+fi
+
 mkdir -p "$PREFIX"/{bin,shell,pets,voices}
-pkill -f "$PREFIX/bin/cmux-pet" 2>/dev/null || true
-install -m 755 "$BUILT" "$PREFIX/bin/cmux-pet"
+pkill -f "$PREFIX/bin/lucy" 2>/dev/null || true
+install -m 755 "$BUILT" "$PREFIX/bin/lucy"
 install -m 644 shell/pet.zsh "$PREFIX/shell/pet.zsh"
-info "instalado $("$PREFIX/bin/cmux-pet" --version) en $PREFIX/bin/cmux-pet"
+info "instalado $("$PREFIX/bin/lucy" --version) en $PREFIX/bin/lucy"
 
 # Las mascotas que vienen con el repositorio. Se marcan con .bundled y se
 # reemplazan al actualizar; sus frases generadas viven aparte en voices/.
@@ -133,7 +142,7 @@ if [[ -d "$PREFIX/sprites" ]]; then
     rm -rf "$PREFIX/sprites"
   else
     warn "$PREFIX/sprites es de una version vieja y ya no se usa"
-    warn "para ponerle imagenes a una mascota:  cmux-pet sprite <id> <estado> <archivo>"
+    warn "para ponerle imagenes a una mascota:  lucy sprite <id> <estado> <archivo>"
   fi
 fi
 
@@ -141,7 +150,7 @@ fi
 if ! grep -q '"activePet"[[:space:]]*:[[:space:]]*"' "$PREFIX/config.json" 2>/dev/null; then
   first="$(ls "$PREFIX/pets" 2>/dev/null | head -1)"
   if [[ -n "$first" ]]; then
-    "$PREFIX/bin/cmux-pet" use "$first" >/dev/null 2>&1 || true
+    "$PREFIX/bin/lucy" use "$first" >/dev/null 2>&1 || true
     info "mascota activa: $first"
   fi
 fi
@@ -154,7 +163,7 @@ fi
 if [[ -f "$ZSHRC" ]] && grep -qF "$SOURCE_LINE" "$ZSHRC"; then
   info "el enganche ya estaba en $ZSHRC"
 else
-  cp -p "$ZSHRC" "$ZSHRC.cmux-pet-backup.$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
+  cp -p "$ZSHRC" "$ZSHRC.lucy-backup.$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
   printf '\n%s\n%s\n' "$MARKER" "$SOURCE_LINE" >> "$ZSHRC"
   info "enganche agregado a $ZSHRC (backup guardado)"
 fi
@@ -163,9 +172,9 @@ fi
 
 if [[ -n "${CMUX_WORKSPACE_ID:-}" ]]; then
   # Estamos dentro de cmux: el proceso hereda el acceso al socket de control.
-  ( nohup "$PREFIX/bin/cmux-pet" >> "$PREFIX/pet.log" 2>&1 < /dev/null & ) >/dev/null 2>&1
+  ( nohup "$PREFIX/bin/lucy" >> "$PREFIX/pet.log" 2>&1 < /dev/null & ) >/dev/null 2>&1
   sleep 2
-  if pgrep -f "$PREFIX/bin/cmux-pet" >/dev/null; then
+  if pgrep -f "$PREFIX/bin/lucy" >/dev/null; then
     info "asistente arrancado"
   else
     warn "no arrancó; mira $PREFIX/pet.log"
@@ -184,7 +193,7 @@ cat <<EOF
     click derecho    opciones
 
   En terminales que ya tenías abiertas:  source ~/.zshrc
-  Actualizar:                            cmux-pet update
+  Actualizar:                            lucy update
   Log:                                   tail -f $PREFIX/pet.log
 EOF
 

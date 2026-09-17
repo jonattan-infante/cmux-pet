@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import install  # noqa: E402
 
-HOOK = Path("C:/fake/cmux-pet-hook.ps1")
+HOOK = Path("C:/fake/lucy-hook.ps1")
 
 
 class MergeTests(unittest.TestCase):

@@ -9,17 +9,18 @@ información existe — cmux la publica toda — pero está repartida en el side
 Feed y las notificaciones del sistema, y ninguna de esas cosas está mirándote a la
 cara.
 
-cmux-pet pone una mascota sobre la pantalla que te lo dice. **Cuál mascota, lo
+LucyGlow pone una mascota sobre la pantalla que te lo dice. **Cuál mascota, lo
 eliges tú.**
 
 ## Qué es, en una frase
 
-Una plataforma de mascotas de escritorio para cmux: el programa sabe **cuándo**
-hablar, y un paquete instalable decide **cómo se ve y cómo habla**.
+Una plataforma de mascotas de escritorio para tus agentes de IA: el programa sabe
+**cuándo** hablar, y un paquete instalable decide **cómo se ve y cómo habla**. En
+macOS observa cmux; en Windows observa Claude Code directamente.
 
 ```
                   ┌──────────────────────────────────┐
-   cmux ────────► │  cmux-pet                        │
+   cmux ────────► │  lucy                        │
    eventos        │    decide cuándo y de qué avisar  │
                   └───────────────┬──────────────────┘
                                   │  los seis estados
@@ -55,9 +56,9 @@ requiriera Swift, no habría más de una.
 | "¿pasó el build?" | avisa comandos de más de 20 s y cualquier fallo |
 | "¿levantó el server?" | avisa puertos que empiezan y dejan de escuchar |
 | "llévame ahí" | un click salta al workspace del aviso y trae cmux al frente |
-| "quiero otra mascota" | `cmux-pet search` y `cmux-pet install <id> --use` |
-| "quiero hacer la mía" | `cmux-pet new mi-mascota`, editar un archivo, listo |
-| "¿salió una versión nueva?" | la mascota avisa una vez, con su voz; `cmux-pet update` la trae. Igual en Windows |
+| "quiero otra mascota" | `lucy search` y `lucy install <id> --use` |
+| "quiero hacer la mía" | `lucy new mi-mascota`, editar un archivo, listo |
+| "¿salió una versión nueva?" | la mascota avisa una vez, con su voz; `lucy update` la trae. Igual en Windows |
 
 ## Qué NO es
 
@@ -79,7 +80,7 @@ requiriera Swift, no habría más de una.
    instalada, lo dice en pantalla. Un asistente mudo que parece funcionar es peor
    que uno ausente.
 3. **Crear una mascota toma menos de diez minutos** y no requiere leer código.
-   `cmux-pet new` deja un paquete que ya funciona; el usuario solo le da voz.
+   `lucy new` deja un paquete que ya funciona; el usuario solo le da voz.
 4. **Un paquete de un tercero no puede romper la app.** Se valida en la frontera:
    rutas que no se escapan, colores bien escritos, sprites que existen.
 5. **Se instala en un comando** y no pide cambiar la configuración de seguridad

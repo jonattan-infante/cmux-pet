@@ -1,8 +1,9 @@
 # CLAUDE.md — router del repositorio
 
-Plataforma de mascotas de escritorio para [cmux](https://cmux.com). El programa
-decide **cuándo** hablar; un paquete instalable decide **cómo se ve y cómo habla**.
-macOS, Swift, sin dependencias.
+LucyGlow: plataforma de mascotas de escritorio para tus agentes de IA. El
+programa decide **cuándo** hablar; un paquete instalable decide **cómo se ve y
+cómo habla**. En macOS observa [cmux](https://cmux.com) y está en Swift, sin
+dependencias; en Windows observa Claude Code directamente.
 
 ## Antes de empezar una sesión
 
@@ -26,8 +27,8 @@ macOS, Swift, sin dependencias.
 make verify     # el gate: build + tests Swift + hooks de zsh + instalador + integridad
 make render     # dibuja cada estado de la mascota activa a PNG en ./render
 make run        # arranca en primer plano
-make install    # instala en ~/.cmux-pet, con las mascotas incluidas
-make log        # sigue ~/.cmux-pet/pet.log
+make install    # instala en ~/.lucy, con las mascotas incluidas
+make log        # sigue ~/.lucy/pet.log
 make tag        # publica la versión de VERSION: tag anotado y firmado + release por CI, solo desde main
 make next-version   # propone X.Y.Z desde los commits (Conventional Commits)
 make release-notes  # borrador de la sección del CHANGELOG
@@ -36,18 +37,18 @@ make release-notes  # borrador de la sección del CHANGELOG
 Comandos de mascota (el producto, no el build):
 
 ```bash
-cmux-pet list                     # instaladas, con la activa marcada
-cmux-pet use <id>                 # cambiar de mascota
-cmux-pet search [texto]           # buscar en el marketplace
-cmux-pet install <id|url|ruta>    # instalar; --use la activa, --force reemplaza
-cmux-pet new <id> [--sprites]     # crear un paquete nuevo, ya válido
-cmux-pet fork <origen> <nuevo>    # copia editable de una mascota existente
-cmux-pet sprite <id> <estado> <f> # ponerle imagen; --dir <carpeta>, --clear
-cmux-pet validate <ruta>          # revisar un paquete y explicar cada fallo
-cmux-pet voice [<id>]             # que Claude Code le escriba las frases
-cmux-pet info <id>
-cmux-pet uninstall <id>
-cmux-pet update [--check]         # reinstalar la última publicada; --check solo compara
+lucy list                     # instaladas, con la activa marcada
+lucy use <id>                 # cambiar de mascota
+lucy search [texto]           # buscar en el marketplace
+lucy install <id|url|ruta>    # instalar; --use la activa, --force reemplaza
+lucy new <id> [--sprites]     # crear un paquete nuevo, ya válido
+lucy fork <origen> <nuevo>    # copia editable de una mascota existente
+lucy sprite <id> <estado> <f> # ponerle imagen; --dir <carpeta>, --clear
+lucy validate <ruta>          # revisar un paquete y explicar cada fallo
+lucy voice [<id>]             # que Claude Code le escriba las frases
+lucy info <id>
+lucy uninstall <id>
+lucy update [--check]         # reinstalar la última publicada; --check solo compara
 ```
 
 `make verify` es el juez. Si pasa, el cambio es candidato; si no pasa, no existe.
@@ -62,7 +63,7 @@ cmux-pet update [--check]         # reinstalar la última publicada; --check sol
 3. **Nunca editar un pack marcado `.bundled`.** Se reemplaza al actualizar y el
    trabajo del usuario se perdería sin aviso: primero `fork`. Todo cambio al
    manifiesto se revalida y se revierte si dejaría el paquete inválido.
-4. **Las frases generadas van a `~/.cmux-pet/voices/<id>.json`, nunca dentro del
+4. **Las frases generadas van a `~/.lucy/voices/<id>.json`, nunca dentro del
    pack.** Actualizar un pack no puede borrarlas.
 5. **El prompt se compone**: personalidad del pack + contrato del programa. No
    meter personalidad en el código ni contrato en el pack.
@@ -83,7 +84,7 @@ cmux-pet update [--check]         # reinstalar la última publicada; --check sol
 14. **Nunca bloquear el hilo principal con `cmuxJSON`.** Es sincrónico: va en
     `DispatchQueue.global`.
 15. **Nunca escribir al disco del usuario desde el repo.** Todo el estado vive en
-    `~/.cmux-pet`.
+    `~/.lucy`.
 16. **Nunca dejar que un fallo sea silencioso.** Sin mascota instalada, sin socket
     o sin frases, se dice en pantalla.
 17. **Nunca arte de personajes con dueño**, ni en los packs incluidos ni aceptado
@@ -132,23 +133,23 @@ marca con ⚠️ y fecha.
 Para lo visual, `make render` es la forma de verificar: escribe un PNG por estado
 de la mascota activa, sin abrir ventana. No hace falta pedirle capturas al usuario.
 
-Para un paquete, `cmux-pet validate` explica cada fallo. Úsalo antes de afirmar
+Para un paquete, `lucy validate` explica cada fallo. Úsalo antes de afirmar
 que un pack está bien.
 
 ## Mapa del código
 
 | Ruta | Qué vive ahí |
 |---|---|
-| `Sources/cmux-pet/main.swift` | arranque, señales, `--render`, despacho de subcomandos |
-| `Sources/CmuxPetKit/Model/PetPack.swift` | el formato de paquete y su validación |
-| `Sources/CmuxPetKit/Model/PetLibrary.swift` | instaladas, activa, instalar, quitar |
-| `Sources/CmuxPetKit/Model/Mood.swift` | los seis estados y `PetTheme` |
-| `Sources/CmuxPetKit/Model/Update.swift` | semver, estado y regla de silencio del aviso de versión |
-| `Sources/CmuxPetKit/CLI/` | subcomandos, scaffolding y registro del marketplace |
-| `Sources/CmuxPetKit/Voice/` | frases de la mascota activa y composición del prompt |
-| `Sources/CmuxPetKit/Views/` | renderer vectorial, sprites, burbuja, panel de estado |
-| `Sources/CmuxPetKit/Controller/` | orquestador, dividido por fuente de eventos |
-| `Sources/CmuxPetKit/Support/` | rutas, puente con el CLI de cmux, formateo |
+| `Sources/lucy/main.swift` | arranque, señales, `--render`, despacho de subcomandos |
+| `Sources/LucyGlowKit/Model/PetPack.swift` | el formato de paquete y su validación |
+| `Sources/LucyGlowKit/Model/PetLibrary.swift` | instaladas, activa, instalar, quitar |
+| `Sources/LucyGlowKit/Model/Mood.swift` | los seis estados y `PetTheme` |
+| `Sources/LucyGlowKit/Model/Update.swift` | semver, estado y regla de silencio del aviso de versión |
+| `Sources/LucyGlowKit/CLI/` | subcomandos, scaffolding y registro del marketplace |
+| `Sources/LucyGlowKit/Voice/` | frases de la mascota activa y composición del prompt |
+| `Sources/LucyGlowKit/Views/` | renderer vectorial, sprites, burbuja, panel de estado |
+| `Sources/LucyGlowKit/Controller/` | orquestador, dividido por fuente de eventos |
+| `Sources/LucyGlowKit/Support/` | rutas, puente con el CLI de cmux, formateo |
 | `pets/` | mascotas incluidas: `astro`, `gatito`, `cangrejo` y `llama` |
 | `windows/` | port para Windows en Python: mismos packs, mismo contrato de voz y de versión |
 | `VERSION` | la versión del producto; `CHANGELOG.md` lleva sus notas |
