@@ -51,7 +51,10 @@ estado es "por verificar".
 | Instalador y desinstalador probados de punta a punta | `./install.sh --from-source` sobre la máquina real: 1 instancia, aviso real entregado. Desinstalación cubierta por 12 casos en sandbox |
 | Versión del producto con fuente única y guarda | `VERSION` + `scripts/bump-version.sh`; la integridad compara cuatro sitios y falla en negativo (P0.3f) |
 | Aviso de versión nueva, mismo contrato en macOS y Windows | `docs/reference/versioning.md`; 14 tests en `UpdateTests.swift` y 17 en `test_update.py` con los mismos casos; punta a punta con `CMUX_PET_UPDATE_URL=file://…` en la máquina real: `aviso: [info] … 9.9.9` una sola vez, `update.json` con `announced` (ver claude-progress) |
-| `cmux-pet update [--check]` y `python install.py --update` | `update --check` contra GitHub real → `sin versiones publicadas todavía`, salida 0. `--update` en Windows solo probado por lectura ⚠️ 2026-09-17 |
+| `cmux-pet update [--check]` y `python install.py --update` | tras publicar `v0.2.0`: `update --check` → `Estás en la última versión publicada`, salida 0. `--update` en Windows solo probado por lectura ⚠️ 2026-09-17 |
+| Primer release publicado por tag | `make tag` → `v0.2.0`; run 35236336097 de `release.yml`: `el tag dice lo mismo que el repo`, `binario de macOS`, `publicar el release` en verde; release con `cmux-pet-0.2.0-macos-arm64.tar.gz` y `.sha256` |
+| Reglas de tags con verificación y protección | `docs/reference/tags.md`; `scripts/check-tag.sh` (19 casos en `test-release-tooling.sh`, en el gate y en CI); `release.yml` lo exige con `--on origin/main`; ruleset `tags de version` (id 23606182) sobre `refs/tags/v*` |
+| Versión y notas propuestas desde los commits | `make next-version` y `make release-notes` (Conventional Commits → Keep a Changelog), probados en el mismo test |
 | Instalador de macOS clona el último release | `install.sh`: resuelve `tag_name` de `releases/latest`, cae a `main` y lo dice; `bash -n` ok. **Sin release publicado aún, la rama `main` es lo que instala** ⚠️ 2026-09-17 |
 
 ## En vuelo
@@ -60,7 +63,7 @@ estado es "por verificar".
 |---|---|---|---|
 | F1 | Mascotas con arte propio | el renderer `sprites` funciona, pero ningún pack incluido lo usa | hacer un pack de ejemplo con sprites, aunque sean formas simples, para que se vea el camino |
 | F2 | Más renderers integrados | hay `vector:droid`, `vector:ball` y `vector:sage` | portar `ball` y `sage` al Canvas de Windows |
-| F3 | Primer release publicado | `release.yml` escrito y pasado por `actionlint`, **nunca ejercido** ⚠️ 2026-09-17 | con `main` al día: `make tag` para `v0.2.0`, mirar el job, y comprobar que `cmux-pet update --check` dice `Estás en la última versión publicada` |
+| F4 | Reglas de tags aplicadas a un tag real | `check-tag.sh` y el ruleset existen; `v0.2.0` es anterior a las reglas | el primer `make tag` de `v0.3.0` prueba firma, notas en el mensaje, `check-tag` en CI y el bypass del ruleset |
 
 
 ## Riesgos
@@ -74,7 +77,8 @@ estado es "por verificar".
 | R5 | Un pack del marketplace trae arte de un personaje con dueño | problema legal para el autor y para el índice | regla explícita en `docs/marketplace.md`, revisión en el PR, y se quita del índice al detectarlo. **Depende de revisión humana** ⚠️ 2026-07-31 |
 | R6 | Un pack malicioso apunta sprites fuera de su carpeta | leer archivos del usuario | `..` prohibido en rutas, cubierto por test. Un pack no ejecuta código: solo aporta texto e imágenes |
 | R7 | El registro crece y el `git clone --depth 1` por install se vuelve costoso | instalación lenta | hoy son 2 entradas; si crece, cachear o servir tarballs (B11) |
-| R8 | `release.yml` falla en el primer tag (permisos, `gh`, awk de las notas) | no hay release y nadie recibe el aviso; el instalador sigue en `main` | el fallo es visible en Actions; se corrige y se vuelve a etiquetar. **Por verificar con `v0.2.0`** ⚠️ 2026-09-17 |
+| R8 | `release.yml` falla en un tag | no hay release y nadie recibe el aviso; el instalador sigue en la última publicada | verificado con `v0.2.0`: los tres jobs en verde. Desde `v0.3.0` además corre `check-tag.sh`, que no se ha ejercido en CI ⚠️ 2026-09-17 |
+| R10 | El bypass del ruleset de tags no aplica al dueño y `make tag` no puede empujar | el tag queda en local; nada publicado | el error es visible en el push; se ajusta el ruleset y se reintenta. **Por verificar con `v0.3.0`** ⚠️ 2026-09-17 |
 | R9 | La burbuja de actualización en Tk (Windows) no se ha visto en una máquina Windows real | el aviso podría no mostrarse aunque la lógica esté probada | la lógica pura tiene 17 tests y `Checker` está probado con `file://`; falta `--selftest` con `CMUX_PET_UPDATE_URL` en Windows ⚠️ 2026-09-17 |
 
 ## Backlog
@@ -95,4 +99,6 @@ Ordenado por relación valor/esfuerzo, no por antojo.
 | B8 | Fórmula de Homebrew | `brew install` es lo que espera la gente; el release ya adjunta el tarball con su sha256 | medio |
 | B12 | Que el instalador de macOS use el tarball del release en vez de compilar | instalar sin Xcode; depende de firmar (B9) | medio |
 | B13 | Marcar el job `port de Windows` como check obligatorio en `main` | hoy son cuatro checks obligatorios; se cambia en Settings > Branches | bajo |
+| B14 | Registrar la llave SSH como signing key en GitHub | hoy los tags firmados se verían "Unverified"; `gh ssh-key add --type signing` necesita el scope `admin:ssh_signing_key` | bajo |
+| B15 | Job que publique solo (`next-version` + `release-notes` + PR + `make tag` con llave propia) | hoy las notas las reescribe una persona; ver `docs/reference/tags.md` §Automatizar | medio |
 | B9 | Empaquetar como `.app` firmada | necesario si algún día se distribuye fuera de GitHub | alto |

@@ -56,17 +56,37 @@ La máquina del autor quedó con `cmux-pet 0.2.0` instalado desde esta rama y si
 `update.json` (se borró al terminar la prueba para que la primera consulta real
 ocurra sola).
 
-**Nada publicado todavía.** No hay tag ni release: `make tag` es el paso de
-Jonattan después del merge. Hasta entonces el instalador de macOS instala `main`
-y lo dice en pantalla.
+**`v0.2.0` está publicado.** `make tag` empujó el tag y `release.yml` corrió por
+primera vez en verde (run 35236336097): release con el tarball de macOS y su
+sha256. `cmux-pet update --check` contra GitHub real:
+
+```
+cmux-pet 0.2.0
+Estás en la última versión publicada.
+```
+
+Desde entonces hay **reglas de tags** (`docs/reference/tags.md`): anotado, firmado
+con SSH, notas del CHANGELOG en el mensaje, desde `main`, inmutable. Las verifica
+`scripts/check-tag.sh` (19 casos en `test-release-tooling.sh`, dentro del gate),
+`make tag` antes de empujar y `release.yml` antes de publicar. Un ruleset en GitHub
+(`tags de version`, id 23606182) impide crear, mover o borrar `v*` sin rol de
+administrador. La firma SSH está configurada solo en este repo
+(`git config gpg.format ssh`, llave `~/.ssh/id_ed25519_github.pub`) y probada con
+un tag local que se borró sin empujar.
+
+`v0.2.0` es anterior a las reglas (sin notas ni firma) y por inmutabilidad se
+queda así.
 
 ## Próximo paso
 
-**Publicar `v0.2.0`** (F3 en el plan): mergear la PR, `git checkout main && git
-pull`, `make tag`, mirar el job `release` en Actions, y comprobar que
-`cmux-pet update --check` diga `Estás en la última versión publicada`. Es la
-primera vez que `release.yml` corre: si falla, se corrige y se vuelve a etiquetar
-(R8).
+**Que el primer `make tag` bajo las reglas sea `v0.3.0`** (F4): probará la firma,
+las notas en el mensaje, `check-tag.sh` en CI y el bypass del ruleset. Antes,
+registrar la llave como signing key en GitHub (B14) para que aparezca "Verified":
+
+```
+gh auth refresh -h github.com -s admin:ssh_signing_key
+gh ssh-key add ~/.ssh/id_ed25519_github.pub --type signing --title "firma de tags"
+```
 
 Después: probar `python pet.py --selftest` con `CMUX_PET_UPDATE_URL` en una máquina
 Windows real (R9), y marcar el job `port de Windows` como check obligatorio (B13).
@@ -81,6 +101,7 @@ Windows real (R9), y marcar el job `port de Windows` como check obligatorio (B13
 | 2026-07-31 | Pivote a plataforma: pet packs, marketplace, CLI de mascotas, voz por personalidad (`docs/adr/0005`) |
 | 2026-08-02 | Comandos `sprite` y `fork`; renderers `vector:ball` y `vector:sage`; port de Windows en Python (PRs #2, #3, #4) |
 | 2026-09-17 | La versión es del producto: `VERSION`, guarda de integridad, release por tag, instalador al último release, y aviso de versión nueva con el mismo contrato en macOS y Windows (`docs/adr/0006`) |
+| 2026-09-17 | Primer release: `v0.2.0`. README reescrito. Reglas de tags con `check-tag.sh`, `next-version`, `release-notes`, firma SSH y ruleset en GitHub (`docs/reference/tags.md`) |
 
 ## Trampas que ya costaron tiempo
 
@@ -113,6 +134,12 @@ No volver a caer en estas. Todas están documentadas con evidencia en
     tests de Windows no corrían ni en `make verify` ni en CI.
 11. **`Config` de Windows descarta claves desconocidas.** Una preferencia nueva que
     no esté en `DEFAULTS` se pierde en el siguiente `save()`.
+12. **El remote no tenía refspec de fetch** (`remote.origin.fetch` vacío), así que
+    `origin/main` no existía en local y `git fetch` solo movía `FETCH_HEAD`. Se
+    arregló con `git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'`.
+    `make tag` depende de `origin/main`.
+13. **`git branch -d` no borra una rama mergeada por squash**: para git no está
+    "fully merged". Es `-D`, tras comprobar que el PR entró.
 
 ## Checklist de fin de sesión
 

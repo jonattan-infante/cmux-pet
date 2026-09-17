@@ -98,17 +98,27 @@ Ramas: `<tipo>/<descripcion-corta-en-kebab>`.
 ## Publicar una versión
 
 La versión es del producto, no de un binario: `VERSION` en la raíz es la fuente
-única y macOS y Windows llevan una copia que el gate compara. El contrato completo
-está en [`docs/reference/versioning.md`](docs/reference/versioning.md).
+única y macOS y Windows llevan una copia que el gate compara
+([`docs/reference/versioning.md`](docs/reference/versioning.md)). Publicar es un
+tag, y el tag tiene reglas que CI exige
+([`docs/reference/tags.md`](docs/reference/tags.md)): anotado, firmado, con las
+notas del CHANGELOG en el mensaje, desde `main`, e inmutable.
 
-1. Escribe la sección `## [X.Y.Z] — fecha` en `CHANGELOG.md`.
-2. `./scripts/bump-version.sh X.Y.Z` (toca `VERSION`, Swift y Python).
-3. PR normal: `make pr`, `make merge`.
-4. Con `main` al día: `make tag`. Empuja `vX.Y.Z` y CI crea el GitHub Release con
-   las notas del CHANGELOG. Si el tag no coincide con `VERSION`, no se publica nada.
+```bash
+make next-version                # propone X.Y.Z desde los commits (Conventional Commits)
+make release-notes               # borrador de la seccion del CHANGELOG; pegar y reescribir
+./scripts/bump-version.sh X.Y.Z  # VERSION, Swift y Python
+make pr && make merge            # la version entra a main por PR, como todo
+git checkout main && git pull
+make tag                         # tag anotado y firmado, verificado, empujado; CI crea el release
+```
 
-Desde ese momento el instalador de macOS clona esa versión, `--update` en Windows
-mueve el checkout a ella, y la mascota de quien tenga una anterior avisa una vez.
+Si el tag no coincide con `VERSION`, no trae notas, no está firmado o no viene de
+`main`, `make tag` lo borra en local sin empujar y explica qué falta. Si un tag ya
+empujado salió mal, no se borra: se sube la versión y se etiqueta de nuevo.
+
+Para firmar hace falta configurar la llave una vez; está en
+[`docs/reference/tags.md`](docs/reference/tags.md#firmar-configuración-de-una-vez).
 
 ## Reportar un problema
 

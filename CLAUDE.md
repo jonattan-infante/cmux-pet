@@ -17,6 +17,7 @@ macOS, Swift, sin dependencias.
    - decido si avisar o callar → `docs/adr/0004`
    - toco la versión, el release o el aviso de actualización → `docs/reference/versioning.md`
      (es el contrato: se implementa en Swift y en Python con los mismos tests)
+   - voy a publicar o toco cómo se crean los tags → `docs/reference/tags.md`
 4. Al cerrar: actualizar `claude-progress.md` con la checklist del final de ese archivo.
 
 ## Comandos
@@ -27,7 +28,9 @@ make render     # dibuja cada estado de la mascota activa a PNG en ./render
 make run        # arranca en primer plano
 make install    # instala en ~/.cmux-pet, con las mascotas incluidas
 make log        # sigue ~/.cmux-pet/pet.log
-make tag        # publica la versión de VERSION: tag + release por CI, solo desde main
+make tag        # publica la versión de VERSION: tag anotado y firmado + release por CI, solo desde main
+make next-version   # propone X.Y.Z desde los commits (Conventional Commits)
+make release-notes  # borrador de la sección del CHANGELOG
 ```
 
 Comandos de mascota (el producto, no el build):
@@ -92,6 +95,11 @@ cmux-pet update [--check]         # reinstalar la última publicada; --check sol
     divergen. Una funcionalidad del producto se define una vez en
     `docs/reference/` y se implementa en los dos runtimes con los mismos tests.
     Ver `docs/adr/0006`.
+21. **Un tag solo nace de `make tag` y nunca se mueve ni se borra.** Anotado,
+    firmado, con las notas del CHANGELOG en el mensaje y desde `main` al día;
+    `scripts/check-tag.sh` lo verifica antes de empujar y CI antes de publicar.
+    Si un tag salió mal, se sube la versión: no se re-etiqueta. Ver
+    `docs/reference/tags.md`.
 
 ## Verificar en vez de recordar
 
@@ -126,7 +134,7 @@ que un pack está bien.
 | `registry.json` | el índice del marketplace |
 | `shell/pet.zsh` | hooks `preexec`/`precmd` y autoarranque |
 | `docs/adr/` | decisiones durables. Insert-once: no se editan |
-| `docs/reference/` | contratos: formato de paquete, eventos de cmux y versionado |
+| `docs/reference/` | contratos: formato de paquete, eventos de cmux, versionado y tags |
 
 ## Convenciones
 

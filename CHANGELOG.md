@@ -3,6 +3,22 @@
 Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Versionado semántico.
 
+## [Unreleased]
+
+### Agregado
+
+- Reglas de los tags en `docs/reference/tags.md`, verificadas por
+  `scripts/check-tag.sh` antes de empujar y por CI antes de publicar: anotado,
+  firmado, con las notas del CHANGELOG en el mensaje, desde `main`, inmutable.
+- `make next-version` y `make release-notes`: proponen la versión y el borrador
+  de notas a partir de los commits (Conventional Commits).
+- Ruleset en GitHub que impide crear, mover o borrar tags `v*` sin el rol de
+  administrador.
+
+### Cambiado
+
+- `make tag` firma el tag con SSH y pone las notas del CHANGELOG en el mensaje.
+
 ## [0.2.0] — 2026-09-17
 
 ### Agregado
