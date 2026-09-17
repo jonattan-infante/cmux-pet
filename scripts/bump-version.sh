@@ -25,12 +25,12 @@ fi
 
 old="$(tr -d '[:space:]' < VERSION)"
 printf '%s\n' "$new" > VERSION
-sed -i '' "s/^public let cmuxPetVersion = \"$old\"\$/public let cmuxPetVersion = \"$new\"/" \
-  Sources/CmuxPetKit/Support/Paths.swift
+sed -i '' "s/^public let lucyGlowVersion = \"$old\"\$/public let lucyGlowVersion = \"$new\"/" \
+  Sources/LucyGlowKit/Support/Paths.swift
 sed -i '' "s/^__version__ = \"$old\"\$/__version__ = \"$new\"/" \
-  windows/cmux_pet_win/__init__.py
+  windows/lucy_win/__init__.py
 
 echo "version: $old -> $new"
-grep -n "$new" VERSION Sources/CmuxPetKit/Support/Paths.swift windows/cmux_pet_win/__init__.py
+grep -n "$new" VERSION Sources/LucyGlowKit/Support/Paths.swift windows/lucy_win/__init__.py
 echo ""
 echo "siguiente: commit, PR, merge, y luego 'make tag' desde main para publicar"

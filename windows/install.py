@@ -1,7 +1,7 @@
-# Instalador de cmux-pet para Windows.
+# Instalador de lucy para Windows.
 #
 # Registra los hooks de Claude Code que alimentan a la mascota y prepara
-# %USERPROFILE%\.cmux-pet. Idempotente: correrlo dos veces no duplica nada.
+# %USERPROFILE%\.lucy. Idempotente: correrlo dos veces no duplica nada.
 #
 #   python install.py            # instalar los hooks en ~/.claude/settings.json
 #   python install.py --uninstall
@@ -10,17 +10,18 @@
 #
 # El instalador va en Python (no en PowerShell) porque Python ya es requisito de
 # la mascota y el merge de settings.json es mas seguro asi. El hook en si
-# (cmux-pet-hook.ps1) si es PowerShell: lo ejecuta Claude Code en cada evento.
+# (lucy-hook.ps1) si es PowerShell: lo ejecuta Claude Code en cada evento.
 
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-HOOK = HERE / "hooks" / "cmux-pet-hook.ps1"
+HOOK = HERE / "hooks" / "lucy-hook.ps1"
 
 # Todos los eventos que la mascota entiende. Los de herramienta llevan matcher "".
 TOOL_EVENTS = ["PreToolUse", "PostToolUse"]
@@ -28,7 +29,7 @@ PLAIN_EVENTS = ["SessionStart", "SessionEnd", "UserPromptSubmit",
                 "Notification", "Stop", "SubagentStop"]
 ALL_EVENTS = TOOL_EVENTS + PLAIN_EVENTS
 
-MARK = "cmux-pet-hook.ps1"   # firma para reconocer nuestros hooks al desinstalar
+MARK = "lucy-hook.ps1"   # firma para reconocer nuestros hooks al desinstalar
 
 
 def hook_command(hook_path: Path) -> str:
@@ -92,8 +93,8 @@ def update_checkout(repo_root: Path, tag: str) -> int:
     asi que esto ES la actualizacion en Windows. No toca un arbol con cambios
     locales: pisarle trabajo a alguien es peor que no actualizar. """
     if not (repo_root / ".git").exists():
-        print("este cmux-pet no es un clon de git, asi que no puedo moverlo solo.")
-        print(f"  descarga la version: https://github.com/jonattan-infante/cmux-pet/releases/tag/{tag}")
+        print("este lucy no es un clon de git, asi que no puedo moverlo solo.")
+        print(f"  descarga la version: https://github.com/jonattan-infante/lucyglow/releases/tag/{tag}")
         return 1
     dirty = _git("status", "--porcelain", cwd=repo_root)
     if dirty.returncode != 0:
@@ -118,7 +119,7 @@ def update_checkout(repo_root: Path, tag: str) -> int:
 def stop_running_pet() -> None:
     """ La mascota vieja sigue en memoria con el codigo viejo. Se le pide salir
     por su pid; el hook SessionStart arranca la nueva en la proxima sesion. """
-    pid_file = Path(os.path.expanduser("~")) / ".cmux-pet" / "pet.pid"
+    pid_file = Path(os.path.expanduser("~")) / ".lucy" / "pet.pid"
     try:
         pid = int(pid_file.read_text(encoding="utf-8").strip())
     except (OSError, ValueError):
@@ -149,7 +150,7 @@ def load_settings(path: Path) -> dict:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Instala los hooks de cmux-pet para Claude Code")
+    ap = argparse.ArgumentParser(description="Instala los hooks de lucy para Claude Code")
     ap.add_argument("--uninstall", action="store_true")
     ap.add_argument("--update", action="store_true",
                     help="mover este checkout a la ultima version publicada")
@@ -162,10 +163,10 @@ def main(argv=None) -> int:
 
     if args.update:
         sys.path.insert(0, str(HERE))
-        from cmux_pet_win import update as updatemod, __version__
+        from lucy_win import update as updatemod, __version__
         current = updatemod.parse(__version__)
         latest, problem = updatemod.fetch_latest()
-        print(f"cmux-pet {__version__}")
+        print(f"lucy {__version__}")
         if problem:
             print(f"  {problem}")
             return 1
@@ -188,19 +189,27 @@ def main(argv=None) -> int:
     settings_path.write_text(json.dumps(updated, indent=2, ensure_ascii=False),
                              encoding="utf-8")
 
-    # Preparar el estado en disco de la mascota.
-    petdir = Path(os.path.expanduser("~")) / ".cmux-pet"
+    # Preparar el estado en disco de la mascota. El producto se llamaba
+    # cmux-pet: migrar en vez de empezar de cero.
+    petdir = Path(os.path.expanduser("~")) / ".lucy"
+    legacy_petdir = Path(os.path.expanduser("~")) / ".cmux-pet"
+    if not petdir.exists() and legacy_petdir.exists():
+        try:
+            shutil.move(str(legacy_petdir), str(petdir))
+            print(f"migrado {legacy_petdir} -> {petdir}")
+        except OSError:
+            pass
     (petdir / "voices").mkdir(parents=True, exist_ok=True)
 
     if args.uninstall:
-        print(f"listo: hooks de cmux-pet quitados de {settings_path}")
+        print(f"listo: hooks de lucy quitados de {settings_path}")
         return 0
 
     if args.update:
         print(f"listo: actualizado y hooks al dia en {settings_path}")
         return 0
 
-    print(f"listo: hooks de cmux-pet instalados en {settings_path}")
+    print(f"listo: hooks de lucy instalados en {settings_path}")
     print("")
     print("La mascota arranca sola en tu proxima sesion de Claude Code.")
     print("Para lanzarla ahora mismo:")

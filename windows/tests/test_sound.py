@@ -1,7 +1,7 @@
 import wave
 from pathlib import Path
 
-from cmux_pet_win import sound
+from lucy_win import sound
 
 
 def test_reminder_wav_es_valido_y_bajito(tmp_path):

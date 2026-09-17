@@ -29,7 +29,7 @@ plantillas; rellenarlas es sustitución de cadenas, o sea instantáneo y gratis.
 ## Decisión
 
 Opción B. `Voice` pide a Claude Code un JSON de plantillas por clase de aviso,
-las valida, y las guarda en `~/.cmux-pet/voice.json`.
+las valida, y las guarda en `~/.lucy/voice.json`.
 
 ```json
 "commandError": [

@@ -1,7 +1,7 @@
-# cmux-pet
+# LucyGlow
 
-[![verify](https://github.com/jonattan-infante/cmux-pet/actions/workflows/ci.yml/badge.svg)](https://github.com/jonattan-infante/cmux-pet/actions/workflows/ci.yml)
-[![release](https://img.shields.io/github/v/release/jonattan-infante/cmux-pet?label=release)](https://github.com/jonattan-infante/cmux-pet/releases)
+[![verify](https://github.com/jonattan-infante/lucyglow/actions/workflows/ci.yml/badge.svg)](https://github.com/jonattan-infante/lucyglow/actions/workflows/ci.yml)
+[![release](https://img.shields.io/github/v/release/jonattan-infante/lucyglow?label=release)](https://github.com/jonattan-infante/lucyglow/releases)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![macOS · Windows](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)
 
@@ -74,18 +74,18 @@ formato del estado en disco.
 ### macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jonattan-infante/cmux-pet/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/jonattan-infante/lucyglow/main/install.sh | bash
 ```
 
-Instala la última versión publicada en `~/.cmux-pet`, engancha `~/.zshrc` y la
+Instala la última versión publicada en `~/.lucy`, engancha `~/.zshrc` y la
 mascota aparece en la esquina inferior derecha al abrir una terminal de cmux.
 Desde un clon del repositorio: `./install.sh --from-source`.
 
 ### Windows
 
 ```powershell
-git clone https://github.com/jonattan-infante/cmux-pet.git
-cd cmux-pet\windows
+git clone https://github.com/jonattan-infante/lucyglow.git
+cd lucyglow\windows
 python install.py
 ```
 
@@ -96,11 +96,11 @@ están en [`windows/README.md`](windows/README.md).
 ### Desinstalar
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jonattan-infante/cmux-pet/main/install.sh | bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/jonattan-infante/lucyglow/main/install.sh | bash -s -- --uninstall
 ```
 
 Quita el binario y el enganche del shell. Tus preferencias, mascotas y arte se
-conservan en `~/.cmux-pet`; bórralo tú si quieres empezar de cero. En Windows:
+conservan en `~/.lucy`; bórralo tú si quieres empezar de cero. En Windows:
 `python install.py --uninstall`.
 
 ## Uso
@@ -118,17 +118,17 @@ Los comandos de terminal (macOS):
 
 | Comando | Qué hace |
 |---|---|
-| `cmux-pet list` | mascotas instaladas, con la activa marcada |
-| `cmux-pet use <id>` | cambiar de mascota, en caliente |
-| `cmux-pet search [texto]` | buscar en el marketplace |
-| `cmux-pet install <id\|url\|ruta> [--use]` | instalar del marketplace, de un repositorio git o de una carpeta |
-| `cmux-pet new <id> [--sprites]` | crear un paquete nuevo, ya válido |
-| `cmux-pet fork <origen> <nuevo>` | copia editable de una mascota existente |
-| `cmux-pet sprite <id> <estado> <archivo>` | ponerle una imagen a un estado; `--dir`, `--clear` |
-| `cmux-pet validate <ruta>` | revisar un paquete y explicar cada fallo |
-| `cmux-pet voice [<id>]` | que Claude Code le escriba las frases |
-| `cmux-pet update [--check]` | actualizar a la última versión publicada |
-| `cmux-pet --version`, `cmux-pet help` | |
+| `lucy list` | mascotas instaladas, con la activa marcada |
+| `lucy use <id>` | cambiar de mascota, en caliente |
+| `lucy search [texto]` | buscar en el marketplace |
+| `lucy install <id\|url\|ruta> [--use]` | instalar del marketplace, de un repositorio git o de una carpeta |
+| `lucy new <id> [--sprites]` | crear un paquete nuevo, ya válido |
+| `lucy fork <origen> <nuevo>` | copia editable de una mascota existente |
+| `lucy sprite <id> <estado> <archivo>` | ponerle una imagen a un estado; `--dir`, `--clear` |
+| `lucy validate <ruta>` | revisar un paquete y explicar cada fallo |
+| `lucy voice [<id>]` | que Claude Code le escriba las frases |
+| `lucy update [--check]` | actualizar a la última versión publicada |
+| `lucy --version`, `lucy help` | |
 
 ## Mascotas
 
@@ -154,11 +154,11 @@ No hace falta programar. Una mascota es una carpeta con un archivo que describe
 cómo habla:
 
 ```bash
-cmux-pet new mi-mascota        # crea un paquete que ya funciona
+lucy new mi-mascota        # crea un paquete que ya funciona
 # edita mi-mascota/persona.md  <- lo único imprescindible
-cmux-pet validate ./mi-mascota
-cmux-pet install ./mi-mascota --use
-cmux-pet voice mi-mascota      # Claude Code le escribe sus frases
+lucy validate ./mi-mascota
+lucy install ./mi-mascota --use
+lucy voice mi-mascota      # Claude Code le escribe sus frases
 ```
 
 `persona.md` es prosa, no configuración:
@@ -173,7 +173,7 @@ Usas sonidos de gato con moderación: "mrrp", "miau", "prrr". No en todas las
 frases, y nunca más de uno por frase.
 ```
 
-Con eso, `cmux-pet voice` produjo 64 frases como estas:
+Con eso, `lucy voice` produjo 64 frases como estas:
 
 ```
 {cmd} explotó{where}, código {code}, fffs. Vuelvo a mi caja.
@@ -186,9 +186,9 @@ fuera del paquete, así que actualizar la mascota no las borra.
 ### Con tu propio arte
 
 ```bash
-cmux-pet sprite mi-mascota idle gato.png       # una imagen a un estado
-cmux-pet sprite mi-mascota --dir ./mis-dibujos # varias, por nombre de archivo
-cmux-pet sprite mi-mascota --clear             # volver al dibujo vectorial
+lucy sprite mi-mascota idle gato.png       # una imagen a un estado
+lucy sprite mi-mascota --dir ./mis-dibujos # varias, por nombre de archivo
+lucy sprite mi-mascota --clear             # volver al dibujo vectorial
 ```
 
 Con `--dir` toma los archivos que se llamen como un estado (`idle.png`,
@@ -201,9 +201,9 @@ Para partir de una mascota incluida, saca tu copia primero: las de fábrica se
 reemplazan al actualizar.
 
 ```bash
-cmux-pet fork gatito mi-gato --name "Mi Gato"
-cmux-pet sprite mi-gato --dir ./mis-dibujos
-cmux-pet use mi-gato
+lucy fork gatito mi-gato --name "Mi Gato"
+lucy sprite mi-gato --dir ./mis-dibujos
+lucy use mi-gato
 ```
 
 ### Sin arte propio
@@ -217,7 +217,7 @@ son originales:
 | `vector:ball` | droide esférico: cuerpo bola que rueda, cúpula y antena |
 | `vector:sage` | figura encapuchada: túnica, ojos en la sombra, bastón |
 
-`cmux-pet renderers` los lista. El formato completo del paquete está en
+`lucy renderers` los lista. El formato completo del paquete está en
 [`docs/reference/pet-pack.md`](docs/reference/pet-pack.md).
 
 ### Publicar en el marketplace
@@ -228,14 +228,14 @@ tú quieras.
 
 1. Sube tu paquete a un repositorio público tuyo.
 2. Abre un PR que agregue una entrada a [`registry.json`](registry.json).
-3. Al mergearse, `cmux-pet install tu-id` funciona para todo el mundo.
+3. Al mergearse, `lucy install tu-id` funciona para todo el mundo.
 
 Qué se revisa y qué se rechaza: [`docs/marketplace.md`](docs/marketplace.md). Una
 regla que no se negocia: **nada de arte de personajes con dueño**.
 
 ## Configuración
 
-`~/.cmux-pet/config.json` (en Windows, `%USERPROFILE%\.cmux-pet\config.json`):
+`~/.lucy/config.json` (en Windows, `%USERPROFILE%\.lucy\config.json`):
 
 | Clave | Por defecto | Qué controla |
 |---|---|---|
@@ -249,10 +249,10 @@ regla que no se negocia: **nada de arte de personajes con dueño**.
 Variables de entorno para los hooks de zsh, en `~/.zshrc` antes del `source`:
 
 ```zsh
-export CMUX_PET_MIN_SECONDS=20        # umbral de "comando largo"
-export CMUX_PET_IGNORE="vim ssh ..."  # comandos que nunca se reportan
-export CMUX_PET_NO_AUTOSTART=1        # no arrancar solo
-export CMUX_PET_REGISTRY=<url>        # usar otro marketplace
+export LUCY_MIN_SECONDS=20        # umbral de "comando largo"
+export LUCY_IGNORE="vim ssh ..."  # comandos que nunca se reportan
+export LUCY_NO_AUTOSTART=1        # no arrancar solo
+export LUCY_REGISTRY=<url>        # usar otro marketplace
 ```
 
 ## Actualizar
@@ -261,8 +261,8 @@ La mascota avisa una vez cuando sale una versión nueva, con su propia voz. Desp
 de eso, actualizar es un comando:
 
 ```bash
-cmux-pet update            # macOS: reinstala la última publicada
-cmux-pet update --check    # solo dice si hay una más nueva
+lucy update            # macOS: reinstala la última publicada
+lucy update --check    # solo dice si hay una más nueva
 ```
 
 En Windows, desde `windows/`: `python install.py --update`.
@@ -308,27 +308,27 @@ desde launchd. Por eso arranca desde tu shell
 
 ## Solución de problemas
 
-**No llegan avisos.** Mira `~/.cmux-pet/pet.log`: registra cada aviso, cada
+**No llegan avisos.** Mira `~/.lucy/pet.log`: registra cada aviso, cada
 supresión y cada caída de la conexión con cmux. Si dice que el socket rechazó el
 proceso, la mascota se arrancó fuera de cmux; ciérrala y abre una terminal de cmux
 nueva. `cmux capabilities | grep access_mode` dice cómo está configurado el socket.
 
 **Habla con frases genéricas.** Todavía no tiene frases generadas: click derecho,
-"Reescribir sus frases", o `cmux-pet voice`. Necesita Claude Code instalado.
+"Reescribir sus frases", o `lucy voice`. Necesita Claude Code instalado.
 
-**No hay mascota.** `cmux-pet install astro --use`. Sin mascota instalada lo dice
+**No hay mascota.** `lucy install astro --use`. Sin mascota instalada lo dice
 en pantalla en vez de quedarse muda.
 
 **Molesta.** Click derecho, "Silenciar avisos". O ajusta `config.json`.
 
 Para reportar un problema, incluye la salida de `pet.log`, la versión de macOS o
-Windows, y `cmux-pet --version`.
+Windows, y `lucy --version`.
 
 ## Contribuir
 
 ```bash
-git clone https://github.com/jonattan-infante/cmux-pet.git
-cd cmux-pet
+git clone https://github.com/jonattan-infante/lucyglow.git
+cd lucyglow
 make verify        # el gate completo: lo mismo que corre CI
 make render        # revisar el dibujo a ojo
 make run           # arrancar en primer plano
@@ -348,5 +348,5 @@ cada estado. Los cambios por versión, en [`CHANGELOG.md`](CHANGELOG.md).
 
 [MIT](LICENSE). Cada mascota del marketplace declara la suya.
 
-cmux-pet no está afiliado a cmux ni a Anthropic. Los dibujos integrados son
+LucyGlow no está afiliado a cmux ni a Anthropic. Los dibujos integrados son
 originales.

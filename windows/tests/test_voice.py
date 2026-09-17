@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from cmux_pet_win import voice, paths  # noqa: E402
+from lucy_win import voice, paths  # noqa: E402
 
 
 class ValidateTests(unittest.TestCase):

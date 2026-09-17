@@ -2,7 +2,7 @@
 
 - **Estado:** aceptada
 - **Fecha:** 2026-09-17
-- **Decide:** qué es "una versión" de cmux-pet y cómo se entera el usuario de que hay otra
+- **Decide:** qué es "una versión" de lucy y cómo se entera el usuario de que hay otra
 
 ## Contexto
 
@@ -16,8 +16,8 @@ depender de la plataforma.**
 ## Opciones
 
 **A. Versión por plataforma.** Cada runtime con su número y su ciclo. Descartada:
-un mismo `~/.cmux-pet` puede ser leído por los dos (el estado y los packs son
-compartidos), y "cmux-pet 0.3.0" tiene que significar lo mismo en las dos.
+un mismo `~/.lucy` puede ser leído por los dos (el estado y los packs son
+compartidos), y "lucy 0.3.0" tiene que significar lo mismo en las dos.
 
 **B. `VERSION` como fuente única, con copias verificadas.** Ni Swift ni Python leen
 un archivo al compilar sin plugins; se aceptan las copias y se verifica que no
@@ -42,9 +42,9 @@ Para "cómo se entera el usuario":
 plano, y un solo aviso por versión. Elegida. Es la única pieza del producto que
 está en pantalla todo el día, y avisar es su trabajo.
 
-**G. Avisar en cada `cmux-pet` de la terminal.** Se descartó como único canal: en
+**G. Avisar en cada `lucy` de la terminal.** Se descartó como único canal: en
 Windows no existe CLI de la mascota, y la mitad de los usuarios de macOS no vuelve
-a escribir `cmux-pet` después de instalar.
+a escribir `lucy` después de instalar.
 
 ## Decisión
 
@@ -56,7 +56,7 @@ a escribir `cmux-pet` después de instalar.
 - El instalador de macOS clona el último release, no `main`. El de Windows mueve el
   checkout al tag del último release con `--update`.
 - El contrato del aviso vive en `docs/reference/versioning.md` y lo implementan
-  `Model/Update.swift` y `cmux_pet_win/update.py`, con los mismos casos de prueba
+  `Model/Update.swift` y `lucy_win/update.py`, con los mismos casos de prueba
   en `UpdateTests.swift` y `test_update.py`. La clase de frase `updateAvailable`
   entra al vocabulario de voz para que la mascota lo diga con su personalidad.
 

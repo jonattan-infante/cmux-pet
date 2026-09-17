@@ -43,8 +43,8 @@ El asistente arranca desde `shell/pet.zsh`, que lo levanta si no está corriendo
 Toda terminal de cmux es hija de cmux, así que el proceso hereda el acceso.
 
 ```zsh
-if ! pgrep -f 'cmux-pet/bin/cmux-pet' >/dev/null 2>&1; then
-  ( nohup "$HOME/.cmux-pet/bin/cmux-pet" >> "$HOME/.cmux-pet/pet.log" 2>&1 & )
+if ! pgrep -f 'lucy/bin/lucy' >/dev/null 2>&1; then
+  ( nohup "$HOME/.lucy/bin/lucy" >> "$HOME/.lucy/pet.log" 2>&1 & )
 fi
 ```
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from cmux_pet_win.events import parse_line, normalize, Tailer  # noqa: E402
+from lucy_win.events import parse_line, normalize, Tailer  # noqa: E402
 
 
 class ParseTests(unittest.TestCase):

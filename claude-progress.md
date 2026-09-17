@@ -20,9 +20,9 @@ Baseline verde, verificado con comandos en la rama
 ```
 make verify                          -> compila + 84 tests Swift + 8 hooks + 12 instalador
                                         + 15 integridad + 11 mascotas + 51 tests Python
-./.build/debug/cmux-pet --version    -> cmux-pet 0.2.0
-python3 windows/pet.py --version     -> cmux-pet 0.2.0
-./.build/debug/cmux-pet update --check -> "sin versiones publicadas todavía", salida 0
+./.build/debug/lucy --version    -> lucy 0.2.0
+python3 windows/pet.py --version     -> lucy 0.2.0
+./.build/debug/lucy update --check -> "sin versiones publicadas todavía", salida 0
 actionlint release.yml               -> limpio
 ```
 
@@ -31,28 +31,28 @@ Guarda de versión probada en negativo: con `__init__.py` en `0.1.0`,
 `FALLA la version diverge: VERSION=0.2.0 swift=0.2.0 python=0.1.0 changelog=0.2.0`.
 
 El aviso, de punta a punta en la máquina real, con
-`CMUX_PET_UPDATE_URL=file://…/latest.json` (`{"tag_name":"v9.9.9"}`):
+`LUCY_UPDATE_URL=file://…/latest.json` (`{"tag_name":"v9.9.9"}`):
 
 ```
 [14:12:23Z] aviso: [info] *dwoo-weep* Reactivada. A vigilar tus procesos.
 [14:12:53Z] actualizaciones: hay 9.9.9, corre 0.2.0
-[14:12:53Z] aviso: [info] Hay una versión nueva de cmux-pet: 9.9.9. Corre: cmux-pet update
-~/.cmux-pet/update.json -> { "announced": "9.9.9", "checkedAt": "2026-09-17T14:12:53Z", "latest": "9.9.9" }
+[14:12:53Z] aviso: [info] Hay una versión nueva de lucy: 9.9.9. Corre: lucy update
+~/.lucy/update.json -> { "announced": "9.9.9", "checkedAt": "2026-09-17T14:12:53Z", "latest": "9.9.9" }
 segundo arranque                -> 0 avisos de actualización (ver abajo)
 ```
 
 Ese primer aviso salió con el texto neutro del programa porque el pack instalado
-en `~/.cmux-pet/pets/` era la copia anterior, sin la clase `updateAvailable`.
+en `~/.lucy/pets/` era la copia anterior, sin la clase `updateAvailable`.
 Tras `./install.sh --from-source` (binario y packs en 0.2.0, máquina del autor),
 la misma prueba lo dijo con la voz de la mascota activa:
 
 ```
 [14:14:53Z] mascota activa: Astro (astro) v1.1.0, renderer vector:droid
 [14:15:23Z] actualizaciones: hay 9.9.9, corre 0.2.0
-[14:15:23Z] aviso: [info] *bip-bip* Hay una versión nueva de cmux-pet: 9.9.9. Solicito actualización de firmware.
+[14:15:23Z] aviso: [info] *bip-bip* Hay una versión nueva de lucy: 9.9.9. Solicito actualización de firmware.
 ```
 
-La máquina del autor quedó con `cmux-pet 0.2.0` instalado desde esta rama y sin
+La máquina del autor quedó con `lucy 0.2.0` instalado desde esta rama y sin
 `update.json` (se borró al terminar la prueba para que la primera consulta real
 ocurra sola).
 
@@ -72,17 +72,17 @@ el tag dice lo mismo que el repo: success
 binario de macOS: success
 publicar el release: success
 gh release view v0.2.2 -> draft=false prerelease=false
-assets: cmux-pet-0.2.2-macos-arm64.tar.gz, cmux-pet-0.2.2-macos-arm64.tar.gz.sha256
+assets: lucy-0.2.2-macos-arm64.tar.gz, lucy-0.2.2-macos-arm64.tar.gz.sha256
 ```
 
 Y el ciclo completo, de punta a punta en la máquina del autor:
 
 ```
-cmux-pet --version              -> cmux-pet 0.2.0  (instalado antes de publicar)
-cmux-pet update --check         -> Hay una versión nueva: 0.2.2
-cmux-pet update                 -> clona v0.2.2 del release real
-cmux-pet --version              -> cmux-pet 0.2.2
-cmux-pet update --check         -> Estás en la última versión publicada.
+lucy --version              -> lucy 0.2.0  (instalado antes de publicar)
+lucy update --check         -> Hay una versión nueva: 0.2.2
+lucy update                 -> clona v0.2.2 del release real
+lucy --version              -> lucy 0.2.2
+lucy update --check         -> Estás en la última versión publicada.
 ```
 
 El bypass de administrador del ruleset de tags también quedó probado dos veces
@@ -103,7 +103,7 @@ gh auth refresh -h github.com -s admin:ssh_signing_key
 gh ssh-key add ~/.ssh/id_ed25519_github.pub --type signing --title "firma de tags"
 ```
 
-Después: probar `python pet.py --selftest` con `CMUX_PET_UPDATE_URL` en una máquina
+Después: probar `python pet.py --selftest` con `LUCY_UPDATE_URL` en una máquina
 Windows real (R9), y marcar el job `port de Windows` como check obligatorio (B13).
 
 ## Historial
@@ -117,7 +117,7 @@ Windows real (R9), y marcar el job `port de Windows` como check obligatorio (B13
 | 2026-08-02 | Comandos `sprite` y `fork`; renderers `vector:ball` y `vector:sage`; port de Windows en Python (PRs #2, #3, #4) |
 | 2026-09-17 | La versión es del producto: `VERSION`, guarda de integridad, release por tag, instalador al último release, y aviso de versión nueva con el mismo contrato en macOS y Windows (`docs/adr/0006`) |
 | 2026-09-17 | Primer release: `v0.2.0`. README reescrito. Reglas de tags con `check-tag.sh`, `next-version`, `release-notes`, firma SSH y ruleset en GitHub (`docs/reference/tags.md`) |
-| 2026-09-17 | Reglas de tags obligatorias en `CLAUDE.md` para cualquier agente de IA (PR #7). Primer tag bajo las reglas (`v0.2.1`) reveló un bug real de CI con tags anotados; corregido y publicado como `v0.2.2` (PR #9), con el ciclo de `cmux-pet update` probado de punta a punta contra el release real |
+| 2026-09-17 | Reglas de tags obligatorias en `CLAUDE.md` para cualquier agente de IA (PR #7). Primer tag bajo las reglas (`v0.2.1`) reveló un bug real de CI con tags anotados; corregido y publicado como `v0.2.2` (PR #9), con el ciclo de `lucy update` probado de punta a punta contra el release real |
 
 ## Trampas que ya costaron tiempo
 
@@ -130,7 +130,7 @@ No volver a caer en estas. Todas están documentadas con evidencia en
 2. **Medir con `boundingRect` y dibujar con `draw(with:)`** corta la última línea.
    Ver `docs/adr/0003`.
 3. **Un patrón de `.gitignore` sin barra inicial aplica a cualquier nivel.**
-   `render/` excluyó `Sources/CmuxPetKit/Render/`. Lo cubre
+   `render/` excluyó `Sources/LucyGlowKit/Render/`. Lo cubre
    `scripts/test-repo-integrity.sh`.
 4. **`pkill -f <patrón>` mata el propio shell** si el patrón aparece en su línea de
    comandos. Pasó dos veces.

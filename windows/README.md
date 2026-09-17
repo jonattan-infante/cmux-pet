@@ -1,4 +1,4 @@
-# cmux-pet para Windows
+# LucyGlow para Windows
 
 Una mascota flotante que te cuenta qué está haciendo **Claude Code** en Windows.
 
@@ -11,7 +11,7 @@ en vez de cmux, observa a **Claude Code** a través de sus *hooks*.
 Claude Code hooks (PowerShell)
         │  cada evento -> una linea JSON
         ▼
-%USERPROFILE%\.cmux-pet\shell.jsonl
+%USERPROFILE%\.lucy\shell.jsonl
         │  tail
         ▼
    la mascota (tkinter)  ->  uno de seis estados  ->  pet pack (astro / gatito)
@@ -27,7 +27,7 @@ Windows 10/11 · Python 3 (viene tkinter) · sin dependencias que instalar.
 | El pet pack (`pet.json`, `phrases.json`, `persona.md`) | se cargan **los mismos** `pets/astro` y `pets/gatito` del repo |
 | Las plantillas con marcadores (`{agent}`, `{cmd}`, `{where}`...) | idénticas; la voz sale del pack, no del código |
 | Fuente de eventos: cmux (`events` + `rpc`) | **Claude Code hooks** escribiendo `shell.jsonl` |
-| Estado en disco bajo `~/.cmux-pet` | `%USERPROFILE%\.cmux-pet` |
+| Estado en disco bajo `~/.lucy` | `%USERPROFILE%\.lucy` |
 | UI en AppKit (`NSPanel`, `NSView`) | tkinter (`Canvas`, `-transparentcolor`) |
 | Arranque desde el shell (no launchd) | autoarranque desde el hook `SessionStart` |
 | Aviso de versión nueva (`docs/reference/versioning.md`) | idéntico: mismo endpoint, mismo `update.json`, mismos casos de prueba |
@@ -46,7 +46,7 @@ python install.py
 ```
 
 Eso registra los hooks en `~\.claude\settings.json` (respetando los que ya
-tengas) y prepara `%USERPROFILE%\.cmux-pet`. La mascota arranca sola en tu
+tengas) y prepara `%USERPROFILE%\.lucy`. La mascota arranca sola en tu
 próxima sesión de Claude Code, en la esquina inferior derecha.
 
 Para lanzarla ahora mismo, sin esperar:
@@ -94,7 +94,7 @@ paralelo, el estado global es la prioridad más alta entre todas
 ## Elegir mascota
 
 Vienen las dos incluidas del repo. Click derecho sobre la mascota para cambiar,
-o edita `%USERPROFILE%\.cmux-pet\config.json`:
+o edita `%USERPROFILE%\.lucy\config.json`:
 
 ```json
 {
@@ -108,11 +108,11 @@ o edita `%USERPROFILE%\.cmux-pet\config.json`:
 
 ## Cómo está hecho
 
-Todo el código está en `cmux_pet_win/`, dividido igual que el proyecto macOS:
+Todo el código está en `lucy_win/`, dividido igual que el proyecto macOS:
 
 | Archivo | Qué vive ahí | Equivalente macOS |
 |---|---|---|
-| `paths.py` | rutas bajo `%USERPROFILE%\.cmux-pet` | `Support/Paths.swift` |
+| `paths.py` | rutas bajo `%USERPROFILE%\.lucy` | `Support/Paths.swift` |
 | `wording.py` | texto neutro del programa (verbo por herramienta) | `Voice/Wording.swift` |
 | `events.py` | parseo de `shell.jsonl` y tail sin bloquear | `PetController+Sources.swift` |
 | `state.py` | los seis estados y la máquina que los resuelve | `Model/Mood.swift` + Controller |
@@ -121,7 +121,7 @@ Todo el código está en `cmux_pet_win/`, dividido igual que el proyecto macOS:
 | `update.py` | versión publicada, regla de silencio, estado `update.json` | `Model/Update.swift` |
 | `ui.py` | ventana flotante, droide vectorial, burbuja, roster | `Views/` |
 | `app.py` | orquestador: conecta fuente, estado y vista | `Controller/PetController.swift` |
-| `hooks/cmux-pet-hook.ps1` | el hook que Claude Code ejecuta en cada evento | `shell/pet.zsh` |
+| `hooks/lucy-hook.ps1` | el hook que Claude Code ejecuta en cada evento | `shell/pet.zsh` |
 | `install.py` | registra los hooks en `settings.json` | `install.sh` |
 
 ## Verificar

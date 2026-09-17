@@ -3,6 +3,21 @@
 Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Versionado semántico.
 
+## [0.3.0] — 2026-09-17
+
+El producto se llamaba `cmux-pet`, un nombre que prometía una integración con
+cmux que ya no es la única: en Windows observa Claude Code directamente. Ver
+`docs/adr/0007`.
+
+### Incompatible
+
+- Renombrado a **LucyGlow**, comando `lucy`. Repositorio de GitHub: `lucyglow`.
+- Librería Swift `CmuxPetKit` → `LucyGlowKit`; paquete de Windows
+  `cmux_pet_win` → `lucy_win`.
+- Variables de entorno `CMUX_PET_*` → `LUCY_*`.
+- Directorio de estado `~/.cmux-pet` → `~/.lucy`, con migración automática en
+  el primer arranque: nada se pierde de una instalación anterior.
+
 ## [0.2.2] — 2026-09-17
 
 ### Corregido
@@ -51,18 +66,18 @@ efectiva es `0.2.2`; este tag se queda como está, sin borrarse
   `make tag` hace el paso humano desde `main`.
 - **La mascota avisa cuando hay una versión nueva**, en macOS y en Windows: una
   consulta al día como máximo, fuera del hilo principal, y un solo aviso por
-  versión. Se apaga con `checkUpdates: false`. Estado en `~/.cmux-pet/update.json`.
+  versión. Se apaga con `checkUpdates: false`. Estado en `~/.lucy/update.json`.
 - Clase de frase `updateAvailable` con marcador `{version}`, en el contrato de
   voz y en las cuatro mascotas incluidas.
-- `cmux-pet update` (macOS) reinstala la última versión publicada;
-  `cmux-pet update --check` solo compara. En Windows, `python install.py --update`
+- `lucy update` (macOS) reinstala la última versión publicada;
+  `lucy update --check` solo compara. En Windows, `python install.py --update`
   mueve el checkout al tag publicado y `python pet.py --version` dice cuál corre.
 - El instalador de macOS clona la última versión publicada en vez de `main`;
-  `CMUX_PET_VERSION` fija una versión o la rama.
+  `LUCY_VERSION` fija una versión o la rama.
 - Comandos `sprite` para ponerle imagen a una mascota (`--dir`, `--clear`) y
   `fork` para sacar una copia editable de una incluida.
 - Renderers integrados `vector:ball` y `vector:sage`, además de `vector:droid`;
-  `cmux-pet renderers` los lista.
+  `lucy renderers` los lista.
 - Mascotas incluidas `cangrejo` y `llama`, con sprites propios.
 - Port para Windows en `windows/`: observa Claude Code por sus hooks, reusa los
   mismos packs y el mismo contrato de voz. Sus tests entran a `make verify` y a CI.
@@ -80,7 +95,7 @@ Primera versión.
 
 - Droide astromecánico vectorial con seis estados distinguibles, dibujado con
   Core Graphics. Sin imágenes ni dependencias.
-- Sprites propios del usuario desde `~/.cmux-pet/sprites/`, con GIF animado.
+- Sprites propios del usuario desde `~/.lucy/sprites/`, con GIF animado.
 - Avisos estilo terminal: monoespaciados, un párrafo, escritos letra por letra
   con cursor de bloque.
 - Voz generada por Claude Code local sin API key, como plantillas validadas, con
