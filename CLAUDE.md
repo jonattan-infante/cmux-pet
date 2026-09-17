@@ -95,11 +95,32 @@ cmux-pet update [--check]         # reinstalar la última publicada; --check sol
     divergen. Una funcionalidad del producto se define una vez en
     `docs/reference/` y se implementa en los dos runtimes con los mismos tests.
     Ver `docs/adr/0006`.
-21. **Un tag solo nace de `make tag` y nunca se mueve ni se borra.** Anotado,
-    firmado, con las notas del CHANGELOG en el mensaje y desde `main` al día;
-    `scripts/check-tag.sh` lo verifica antes de empujar y CI antes de publicar.
-    Si un tag salió mal, se sube la versión: no se re-etiqueta. Ver
-    `docs/reference/tags.md`.
+21. **Los tags siguen las reglas de `docs/reference/tags.md`, sin excepciones.**
+    Ver la sección siguiente: es obligatoria para cualquier agente de IA que
+    trabaje en este repo, no solo para Claude Code.
+
+## Reglas de tags — obligatorio para cualquier agente de IA
+
+Publicar una versión es crear un tag, y un tag mal creado no se puede deshacer:
+GitHub ya rechaza moverlo o borrarlo. Por eso estas reglas no son una preferencia
+de estilo: son lo único que impide que un agente deje el historial de versiones
+roto sin poder arreglarlo. El porqué de cada una está en
+[`docs/reference/tags.md`](docs/reference/tags.md); esto es el qué.
+
+- **Nunca `git tag` a mano.** Siempre `make tag`. Compone el mensaje, firma con
+  SSH, corre `scripts/check-tag.sh` y solo entonces empuja.
+- **Nunca mover, forzar ni borrar un tag ya empujado**, así el ruleset de GitHub
+  lo permita por el rol de quien opera. Si un tag salió mal, se sube la versión
+  y se etiqueta de nuevo (`scripts/bump-version.sh` + `make tag`); el tag viejo
+  se queda y se documenta como perdido.
+- **Nunca etiquetar fuera de `main` al día**, con cambios sin commit, o antes de
+  que `VERSION` y su sección del `CHANGELOG.md` estén mergeados en `main`.
+- **Nunca escribir a mano el mensaje del tag.** Sale de
+  `scripts/changelog-section.sh`. Si no hay notas para la versión, se escriben
+  en el CHANGELOG antes de etiquetar; no se inventan en el mensaje del tag.
+- **Si `scripts/check-tag.sh` falla, el tag queda solo en local, sin empujar.**
+  Se corrige la causa que reporta y se repite `make tag`. Nunca `--force`, ni
+  editar el script o el ruleset para pasarlo por alto.
 
 ## Verificar en vez de recordar
 
