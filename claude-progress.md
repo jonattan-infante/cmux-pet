@@ -92,11 +92,35 @@ Rama `docs/reglas-de-tags-para-agentes-ia` (PR #7) llevó las reglas de tags a
 `CLAUDE.md` como sección obligatoria para cualquier agente de IA, no solo un
 punto entre otros veinte.
 
+## Refactor de fuentes de eventos (PR1 de 4, `docs/adr/0008`)
+
+`PetController+Events.swift`/`+Sources.swift` estaban cableadas directo a cmux
+y a `shell.jsonl`, sin ninguna interfaz común y sin un solo test. Rama
+`refactor/event-source-contract`: protocolo `EventSource` +
+`NormalizedEvent` (`docs/reference/event-source.md`), `CmuxEventSource` y
+`ShellHookEventSource` como adapters, `PetController.ingest(_:)` como único
+punto que decide mood y texto. Cero cambio de comportamiento observable.
+
+```
+make verify   -> compila + 119 tests Swift (35 nuevos: CmuxEventSourceTests,
+                 FileTailerTests, ShellHookEventSourceTests,
+                 PetControllerIngestTests) + 8 hooks + 14 instalador +
+                 15 integridad + 11 mascotas + 19 release-tooling + 51 Python
+```
+
+Pendiente (F3 en `EXECUTION-PLAN.md`): PR2 generaliza `Tailer` en Windows
+(parser inyectable + campo `agent`), PR3 agrega OpenCode vía un
+plugin-puente, PR4 deja un skeleton de `WmuxEventSource` sin registrar hasta
+verificar el protocolo real de wmux (documentación pública incompleta).
+
 ## Próximo paso
 
-**Registrar la llave como signing key en GitHub** (B14), para que `v0.2.2` y los
-tags que siguen aparezcan "Verified" en vez de "Unverified" (siguen siendo
-válidos sin esto; es solo la insignia visual):
+**Seguir con PR2** (generalizar `Tailer`/`app.py` en Windows, mismo contrato
+de `docs/reference/event-source.md`) antes de PR3 (OpenCode).
+
+Pendiente de antes, sin resolver en esta sesión: **registrar la llave como
+signing key en GitHub** (B14), para que los tags aparezcan "Verified" en vez
+de "Unverified" (siguen siendo válidos sin esto; es solo la insignia visual):
 
 ```
 gh auth refresh -h github.com -s admin:ssh_signing_key

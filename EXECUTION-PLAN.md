@@ -59,6 +59,7 @@ estado es "por verificar".
 | `lucy update` de punta a punta contra un release real | máquina del autor: `0.2.0` instalado → `update --check` decía "Hay una versión nueva: 0.2.2" → `lucy update` clonó el release y quedó en `lucy 0.2.2` → `update --check` dice "Estás en la última versión publicada" |
 | Versión y notas propuestas desde los commits | `make next-version` y `make release-notes` (Conventional Commits → Keep a Changelog), probados en el mismo test |
 | Instalador de macOS clona el último release | `install.sh`: resuelve `tag_name` de `releases/latest`, cae a `main` y lo dice; `bash -n` ok. **Sin release publicado aún, la rama `main` es lo que instala** ⚠️ 2026-09-17 |
+| Contrato `EventSource` (PR1 de 4): cmux y shell detrás de un adapter, con la cobertura que faltaba | `docs/reference/event-source.md`, `docs/adr/0008`; `CmuxEventSource`/`ShellHookEventSource`/`FileTailer` nuevos; `PetController.ingest(_:)` reemplaza `handleCmuxEvent`/`handleShellEvent`. Cero cambio de comportamiento observable. 35 tests nuevos (`CmuxEventSourceTests` 15, `FileTailerTests` 3, `ShellHookEventSourceTests` 3, `PetControllerIngestTests` 14) — antes de este PR, `PetController`/`+Events`/`+Sources` no tenían ningún test. `make verify` → 119 tests Swift + 51 Python, todo verde |
 
 ## En vuelo
 
@@ -66,6 +67,7 @@ estado es "por verificar".
 |---|---|---|---|
 | F1 | Mascotas con arte propio | el renderer `sprites` funciona, pero ningún pack incluido lo usa | hacer un pack de ejemplo con sprites, aunque sean formas simples, para que se vea el camino |
 | F2 | Más renderers integrados | hay `vector:droid`, `vector:ball` y `vector:sage` | portar `ball` y `sage` al Canvas de Windows |
+| F3 | `EventSource` en Windows y fuentes nuevas (PR2-4 de `docs/adr/0008`) | PR1 (contrato + Swift) entregado | PR2: generalizar `Tailer` en Windows (parser inyectable, campo `agent`); PR3: plugin-puente de OpenCode; PR4: skeleton de `WmuxEventSource` |
 
 
 ## Riesgos
@@ -75,7 +77,6 @@ estado es "por verificar".
 | R1 | Si se cierra el pane que lanzó el asistente, el proceso queda hijo de launchd; un respawn del stream sería rechazado por el socket | pierde eventos en silencio | `--reconnect` mantiene la conexión original; `noteStreamExit` avisa en pantalla si el stream muere dos veces seguidas. **Sin verificar en la práctica** ⚠️ 2026-07-31 |
 | R2 | El formato de eventos de cmux puede cambiar entre versiones | el asistente deja de reportar | `docs/reference/cmux-events.md` documenta lo verificado con fecha y versión; el fallo es visible, no silencioso |
 | R3 | La generación de voz consume cuota del usuario | molestia | una llamada cada 7 días; se puede apagar borrando `voice.json` y no regenerando |
-| R4 | `PetController+Events.swift` tiene 314 líneas y crece con cada tipo de evento | difícil de navegar | dividir por categoría si pasa de ~400 (B4) |
 | R5 | Un pack del marketplace trae arte de un personaje con dueño | problema legal para el autor y para el índice | regla explícita en `docs/marketplace.md`, revisión en el PR, y se quita del índice al detectarlo. **Depende de revisión humana** ⚠️ 2026-07-31 |
 | R6 | Un pack malicioso apunta sprites fuera de su carpeta | leer archivos del usuario | `..` prohibido en rutas, cubierto por test. Un pack no ejecuta código: solo aporta texto e imágenes |
 | R7 | El registro crece y el `git clone --depth 1` por install se vuelve costoso | instalación lenta | hoy son 2 entradas; si crece, cachear o servir tarballs (B11) |
@@ -95,7 +96,6 @@ Ordenado por relación valor/esfuerzo, no por antojo.
 | B1 | Sonido opcional por estado | un aviso visual en la esquina se pierde si miras otra pantalla | bajo |
 | B2 | Click derecho en el panel de estado → saltar a ese agente | el panel ya sabe el workspace de cada uno | bajo |
 | B3 | Recarga en caliente de `config.json` | hoy hay que reiniciar para cambiar `narrateEverySeconds` | bajo |
-| B4 | Dividir `PetController+Events.swift` por categoría | ver R4 | bajo |
 | B5 | Soporte de otros shells (bash, fish) | hoy solo zsh; bash necesita `trap DEBUG` + `PROMPT_COMMAND` | medio |
 | B6 | Migrar a concurrencia estricta de Swift 6 | hoy el paquete fija `swiftLanguageVersions: [.v5]` | medio |
 | B7 | Avisos comentados por el modelo con los datos reales | más gracia, pero cuesta latencia; ver `docs/adr/0002` | medio |
