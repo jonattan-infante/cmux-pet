@@ -37,6 +37,19 @@ class StateMachineTests(unittest.TestCase):
         self.assertEqual(sm.mood(now=21.0), Mood.DONE)
         self.assertEqual(sm.mood(now=40.0), Mood.IDLE)
 
+    def test_agent_por_defecto_es_claude(self):
+        sm = StateMachine()
+        a = sm.ingest(ev("Stop"), now=1.0)
+        self.assertEqual(a.vars["agent"], "Claude")
+
+    def test_agent_lo_pone_la_fuente_y_se_mantiene_en_la_sesion(self):
+        # Una fuente distinta (p.ej. OpenCode) lo dice en el primer evento;
+        # los siguientes de la misma sesion no necesitan repetirlo.
+        sm = StateMachine()
+        sm.ingest(ev("PreToolUse", tool="Bash", agent="OpenCode"), now=1.0)
+        a = sm.ingest(ev("Stop"), now=2.0)
+        self.assertEqual(a.vars["agent"], "OpenCode")
+
     def test_notification_is_attention_and_persists(self):
         sm = StateMachine()
         a = sm.ingest(ev("Notification", message="Claude needs permission to run Bash"),

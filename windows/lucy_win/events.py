@@ -53,6 +53,9 @@ def normalize(raw: dict) -> Optional[dict]:
         "ok": raw.get("ok", True),
         "exit": raw.get("exit"),
         "pid": raw.get("pid"),
+        # Hoy solo hay una fuente de hooks de Claude Code, asi que es constante.
+        # Ver docs/reference/event-source.md: cada fuente pone su propio agente.
+        "agent": "Claude",
     }
 
     # Si viene la forma cruda, extraer lo util de sus sub-objetos.
@@ -75,15 +78,21 @@ def _num(v, default):
 
 
 class Tailer:
-    """ Sigue shell.jsonl y entrega solo las lineas nuevas en cada lectura.
+    """ Sigue un archivo de texto y entrega solo las lineas nuevas en cada
+    lectura, ya normalizadas por `parse`.
 
     Arranca al final del archivo: no reproduce el historial al abrir. Tolera que
     el archivo aun no exista, que rote (se trunque) o que crezca. Sin hilos: el
     caller llama read_new() desde su propio timer.
+
+    `parse` es inyectable para poder reusar esta clase con otra fuente que
+    escriba lineas en su propio formato (p.ej. el plugin-puente de OpenCode,
+    ver docs/reference/event-source.md) sin duplicar la logica de tailing.
     """
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, parse=parse_line):
         self.path = Path(path)
+        self._parse = parse
         self._pos = 0
         self._inode = None
         self._seek_end()
@@ -116,7 +125,7 @@ class Tailer:
             with self.path.open("r", encoding="utf-8", errors="replace") as f:
                 f.seek(self._pos)
                 for line in f:
-                    ev = parse_line(line)
+                    ev = self._parse(line)
                     if ev is not None:
                         events.append(ev)
                 self._pos = f.tell()

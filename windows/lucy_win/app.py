@@ -41,13 +41,16 @@ SONG_LINES = [
 
 
 class App:
-    def __init__(self, root: tk.Tk, config: Config = None, tailer: Tailer = None):
+    def __init__(self, root: tk.Tk, config: Config = None, sources: list = None):
         paths.ensure_home()
         self.root = root
         self.config = config or Config.load()
         statemod.set_workspace_aliases(self.config.get("workspaceAliases"))
         self.sm = StateMachine()
-        self.tailer = tailer or Tailer(paths.SHELL_LOG)
+        # Cada fuente cumple el contrato de docs/reference/event-source.md:
+        # read_new() -> list[dict] de eventos ya normalizados. Agregar una
+        # fuente nueva (OpenCode, ...) es sumarla a esta lista.
+        self.sources = sources if sources is not None else [Tailer(paths.SHELL_LOG)]
 
         self.pack = self._load_pack(self.config["activePet"])
         self.voice = voicemod.Voice(self.pack)
@@ -100,8 +103,9 @@ class App:
     def tick(self, now=None):
         if now is None:
             now = time.time()
-        for ev in self.tailer.read_new():
-            self._handle(ev, now)
+        for src in self.sources:
+            for ev in src.read_new():
+                self._handle(ev, now)
         self._maybe_narrate(now)
         self._maybe_song(now)
         self._maybe_todo_reminder(now)

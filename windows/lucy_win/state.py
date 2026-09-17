@@ -53,6 +53,9 @@ GHOST_AFTER = 600.0     # sin senal en 10 min, la sesion se barre
 class Session:
     session_id: str
     workspace: str = ""
+    # Quien la anuncia ("Claude", "OpenCode", ...): la pone la fuente en el
+    # primer evento de la sesion. Ver docs/reference/event-source.md.
+    agent: str = "Claude"
     last_tool: str = ""
     steps: int = 0
     started_ts: float = 0.0
@@ -98,11 +101,11 @@ class StateMachine:
 
     # --- ingesta -----------------------------------------------------------
 
-    def _session(self, sid: str, now: float, cwd: str = "") -> Session:
+    def _session(self, sid: str, now: float, cwd: str = "", agent: str = "Claude") -> Session:
         s = self.sessions.get(sid)
         if s is None:
             ws = _basename(cwd)
-            s = Session(session_id=sid, workspace=ws, started_ts=now, last_ts=now)
+            s = Session(session_id=sid, workspace=ws, agent=agent, started_ts=now, last_ts=now)
             self.sessions[sid] = s
         elif cwd and not s.workspace:
             s.workspace = _basename(cwd)
@@ -111,7 +114,8 @@ class StateMachine:
     def ingest(self, ev: dict, now: float) -> Optional[Announcement]:
         etype = ev.get("event", "")
         sid = ev.get("session", "") or "?"
-        s = self._session(sid, now, ev.get("workspace") or ev.get("cwd", ""))
+        s = self._session(sid, now, ev.get("workspace") or ev.get("cwd", ""),
+                          ev.get("agent") or "Claude")
         s.last_ts = now
 
         if etype == "SessionStart":
@@ -163,7 +167,7 @@ class StateMachine:
             return Announcement(
                 kind="attention",
                 vars={
-                    "agent": _agent(sid),
+                    "agent": s.agent,
                     "what": _what(ev.get("message", "")),
                     "where": _at(s.workspace),
                 },
@@ -175,7 +179,7 @@ class StateMachine:
             s.done_ts = now
             return Announcement(
                 kind="agentDone",
-                vars={"agent": _agent(sid), "where": _at(s.workspace)},
+                vars={"agent": s.agent, "where": _at(s.workspace)},
                 session_id=sid, workspace=s.workspace)
 
         return None
@@ -229,7 +233,7 @@ class StateMachine:
         return Announcement(
             kind="working",
             vars={
-                "agent": _agent(s.session_id),
+                "agent": s.agent,
                 "doing": _activity(s.last_tool),
                 "time": _fmt(now - s.started_ts),
                 "where": _at(s.workspace),
@@ -257,12 +261,6 @@ def _basename(path: str) -> str:
     path = path.replace("\\", "/").rstrip("/")
     name = path.rsplit("/", 1)[-1] if "/" in path else path
     return _WS_ALIASES.get(name, name)
-
-
-def _agent(sid: str) -> str:
-    # Claude Code no nombra a sus agentes; todos son "Claude". El workspace
-    # distingue de cual se habla, via {where}.
-    return "Claude"
 
 
 def _is_idle_notice(message: str) -> bool:
