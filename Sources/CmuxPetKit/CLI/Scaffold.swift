@@ -102,6 +102,9 @@ enum Scaffold {
           ],
           "portDown": [
             "El puerto {port} se cerró{where}."
+          ],
+          "updateAvailable": [
+            "Hay una versión nueva de cmux-pet: {version}. Actualízame cuando puedas."
           ]
         }
         """

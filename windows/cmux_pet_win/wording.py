@@ -49,6 +49,11 @@ def and_others(count: int) -> str:
     return " Y otro mas." if count == 1 else f" Y otros {count} mas."
 
 
+def update_available(version: str) -> str:
+    """ Ultimo recurso cuando el pack no trae frase para la clase. """
+    return f"Hay una version nueva de cmux-pet: {version}. Corre: python install.py --update"
+
+
 def fmt_duration(seconds: float) -> str:
     """ '1 min 34 s', '12 s', '2 h 3 min'. Duracion ya formateada para {time}. """
     s = int(round(seconds))

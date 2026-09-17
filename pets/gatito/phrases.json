@@ -36,5 +36,9 @@
   "portDown": [
     "El puerto {port} se cerró{where}. Como una caja, pero triste.",
     "{port} dejó de escuchar{where}."
+  ],
+  "updateAvailable": [
+    "Mrrp. Hay una versión nueva de cmux-pet: {version}. Actualízame cuando dejes de mirar el sol.",
+    "Salió cmux-pet {version}. No es que me importe, pero podrías actualizarme."
   ]
 }

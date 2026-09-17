@@ -5,6 +5,7 @@
 #
 #   python install.py            # instalar los hooks en ~/.claude/settings.json
 #   python install.py --uninstall
+#   python install.py --update     # mover el checkout a la ultima version publicada
 #   python install.py --settings <ruta>   # para pruebas
 #
 # El instalador va en Python (no en PowerShell) porque Python ya es requisito de
@@ -14,6 +15,7 @@
 import argparse
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -81,6 +83,56 @@ def merge(settings: dict, hook_path: Path, uninstall: bool = False) -> dict:
     return settings
 
 
+def _git(*args, cwd: Path):
+    return subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True)
+
+
+def update_checkout(repo_root: Path, tag: str) -> int:
+    """ Mueve el checkout al tag publicado. La mascota corre desde el checkout,
+    asi que esto ES la actualizacion en Windows. No toca un arbol con cambios
+    locales: pisarle trabajo a alguien es peor que no actualizar. """
+    if not (repo_root / ".git").exists():
+        print("este cmux-pet no es un clon de git, asi que no puedo moverlo solo.")
+        print(f"  descarga la version: https://github.com/jonattan-infante/cmux-pet/releases/tag/{tag}")
+        return 1
+    dirty = _git("status", "--porcelain", cwd=repo_root)
+    if dirty.returncode != 0:
+        print(f"error: git no responde en {repo_root}: {dirty.stderr.strip()}", file=sys.stderr)
+        return 1
+    if dirty.stdout.strip():
+        print("error: hay cambios sin commit en el checkout; guardalos o descartalos y vuelve a correr.",
+              file=sys.stderr)
+        return 1
+    fetch = _git("fetch", "--tags", "--quiet", "origin", cwd=repo_root)
+    if fetch.returncode != 0:
+        print(f"error: no pude traer los tags: {fetch.stderr.strip()}", file=sys.stderr)
+        return 1
+    co = _git("checkout", "--quiet", tag, cwd=repo_root)
+    if co.returncode != 0:
+        print(f"error: no pude cambiar a {tag}: {co.stderr.strip()}", file=sys.stderr)
+        return 1
+    print(f"checkout en {tag}")
+    return 0
+
+
+def stop_running_pet() -> None:
+    """ La mascota vieja sigue en memoria con el codigo viejo. Se le pide salir
+    por su pid; el hook SessionStart arranca la nueva en la proxima sesion. """
+    pid_file = Path(os.path.expanduser("~")) / ".cmux-pet" / "pet.pid"
+    try:
+        pid = int(pid_file.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/PID", str(pid), "/F"], capture_output=True)
+        else:
+            os.kill(pid, 15)
+        print("mascota anterior detenida; arranca sola en tu proxima sesion de Claude Code")
+    except OSError:
+        pass
+
+
 def default_settings_path() -> Path:
     return Path(os.path.expanduser("~")) / ".claude" / "settings.json"
 
@@ -99,12 +151,34 @@ def load_settings(path: Path) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Instala los hooks de cmux-pet para Claude Code")
     ap.add_argument("--uninstall", action="store_true")
+    ap.add_argument("--update", action="store_true",
+                    help="mover este checkout a la ultima version publicada")
     ap.add_argument("--settings", default=None, help="ruta a settings.json (default ~/.claude)")
     args = ap.parse_args(argv)
 
     if not HOOK.exists():
         print(f"error: no encuentro el hook en {HOOK}", file=sys.stderr)
         return 1
+
+    if args.update:
+        sys.path.insert(0, str(HERE))
+        from cmux_pet_win import update as updatemod, __version__
+        current = updatemod.parse(__version__)
+        latest, problem = updatemod.fetch_latest()
+        print(f"cmux-pet {__version__}")
+        if problem:
+            print(f"  {problem}")
+            return 1
+        if current and latest <= current:
+            print("estas en la ultima version publicada.")
+            return 0
+        print(f"hay una version nueva: {updatemod.fmt(latest)}")
+        code = update_checkout(HERE.parent, "v" + updatemod.fmt(latest))
+        if code != 0:
+            return code
+        stop_running_pet()
+        # Los hooks apuntan a una ruta absoluta que no cambio, pero una version
+        # nueva puede traer eventos nuevos: se re-registran, es idempotente.
 
     settings_path = Path(args.settings) if args.settings else default_settings_path()
     settings_path.parent.mkdir(parents=True, exist_ok=True)
@@ -120,6 +194,10 @@ def main(argv=None) -> int:
 
     if args.uninstall:
         print(f"listo: hooks de cmux-pet quitados de {settings_path}")
+        return 0
+
+    if args.update:
+        print(f"listo: actualizado y hooks al dia en {settings_path}")
         return 0
 
     print(f"listo: hooks de cmux-pet instalados en {settings_path}")

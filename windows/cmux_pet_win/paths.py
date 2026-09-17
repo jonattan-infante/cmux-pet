@@ -16,6 +16,8 @@ SPRITES = HOME / "sprites"
 VOICES = HOME / "voices"
 LOG = HOME / "pet.log"
 REMINDER_WAV = HOME / "reminder.wav"
+# Misma forma en macOS y Windows: ver docs/reference/versioning.md.
+UPDATE = HOME / "update.json"
 
 
 def ensure_home() -> None:

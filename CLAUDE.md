@@ -15,6 +15,8 @@ macOS, Swift, sin dependencias.
    - toco eventos de cmux → `ARCHITECTURE.md` §Fuentes + `docs/reference/cmux-events.md`
    - toco los textos o la voz → `docs/adr/0002` y `docs/adr/0005`
    - decido si avisar o callar → `docs/adr/0004`
+   - toco la versión, el release o el aviso de actualización → `docs/reference/versioning.md`
+     (es el contrato: se implementa en Swift y en Python con los mismos tests)
 4. Al cerrar: actualizar `claude-progress.md` con la checklist del final de ese archivo.
 
 ## Comandos
@@ -25,6 +27,7 @@ make render     # dibuja cada estado de la mascota activa a PNG en ./render
 make run        # arranca en primer plano
 make install    # instala en ~/.cmux-pet, con las mascotas incluidas
 make log        # sigue ~/.cmux-pet/pet.log
+make tag        # publica la versión de VERSION: tag + release por CI, solo desde main
 ```
 
 Comandos de mascota (el producto, no el build):
@@ -41,6 +44,7 @@ cmux-pet validate <ruta>          # revisar un paquete y explicar cada fallo
 cmux-pet voice [<id>]             # que Claude Code le escriba las frases
 cmux-pet info <id>
 cmux-pet uninstall <id>
+cmux-pet update [--check]         # reinstalar la última publicada; --check solo compara
 ```
 
 `make verify` es el juez. Si pasa, el cambio es candidato; si no pasa, no existe.
@@ -83,6 +87,11 @@ cmux-pet uninstall <id>
     en el marketplace.
 18. **Cero emojis** en código, mensajes, commits y documentación.
 19. **Nunca crear carpetas de feature vacías** por simetría con la plantilla.
+20. **Nunca cambiar la versión a mano.** `VERSION` es la fuente única y
+    `scripts/bump-version.sh` propaga a Swift y Python; la integridad falla si
+    divergen. Una funcionalidad del producto se define una vez en
+    `docs/reference/` y se implementa en los dos runtimes con los mismos tests.
+    Ver `docs/adr/0006`.
 
 ## Verificar en vez de recordar
 
@@ -105,16 +114,19 @@ que un pack está bien.
 | `Sources/CmuxPetKit/Model/PetPack.swift` | el formato de paquete y su validación |
 | `Sources/CmuxPetKit/Model/PetLibrary.swift` | instaladas, activa, instalar, quitar |
 | `Sources/CmuxPetKit/Model/Mood.swift` | los seis estados y `PetTheme` |
+| `Sources/CmuxPetKit/Model/Update.swift` | semver, estado y regla de silencio del aviso de versión |
 | `Sources/CmuxPetKit/CLI/` | subcomandos, scaffolding y registro del marketplace |
 | `Sources/CmuxPetKit/Voice/` | frases de la mascota activa y composición del prompt |
 | `Sources/CmuxPetKit/Views/` | renderer vectorial, sprites, burbuja, panel de estado |
 | `Sources/CmuxPetKit/Controller/` | orquestador, dividido por fuente de eventos |
 | `Sources/CmuxPetKit/Support/` | rutas, puente con el CLI de cmux, formateo |
-| `pets/` | mascotas incluidas: `astro` y `gatito` |
+| `pets/` | mascotas incluidas: `astro`, `gatito`, `cangrejo` y `llama` |
+| `windows/` | port para Windows en Python: mismos packs, mismo contrato de voz y de versión |
+| `VERSION` | la versión del producto; `CHANGELOG.md` lleva sus notas |
 | `registry.json` | el índice del marketplace |
 | `shell/pet.zsh` | hooks `preexec`/`precmd` y autoarranque |
 | `docs/adr/` | decisiones durables. Insert-once: no se editan |
-| `docs/reference/` | contratos: formato de paquete y eventos de cmux |
+| `docs/reference/` | contratos: formato de paquete, eventos de cmux y versionado |
 
 ## Convenciones
 

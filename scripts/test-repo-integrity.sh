@@ -28,7 +28,7 @@ else
 fi
 
 # --- los archivos que el instalador copia existen y estan versionados ---
-for f in shell/pet.zsh shell/sprites-README.txt install.sh Package.swift; do
+for f in shell/pet.zsh shell/sprites-README.txt install.sh Package.swift VERSION; do
   if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
     printf '  ok   %s versionado\n' "$f"
   else
@@ -53,6 +53,23 @@ if (( lines <= 200 )); then
   printf '  ok   CLAUDE.md es un router (%s lineas)\n' "$lines"
 else
   printf '  FALLA CLAUDE.md tiene %s lineas; dividir en rules por ruta\n' "$lines"
+  fail=1
+fi
+
+# --- la version es una sola: VERSION, Swift, Python y CHANGELOG dicen lo mismo ---
+# Existe porque los dos runtimes llevan una copia del numero (ninguno puede leer
+# VERSION al compilar sin plugins). Si divergen, la mascota de una plataforma
+# creeria que hay una actualizacion que ya tiene, o al reves.
+v_file="$(tr -d '[:space:]' < VERSION)"
+v_swift="$(sed -n 's/^public let cmuxPetVersion = "\(.*\)"$/\1/p' Sources/CmuxPetKit/Support/Paths.swift)"
+v_py="$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' windows/cmux_pet_win/__init__.py)"
+v_log="$(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | tr -d '#[] ')"
+if [[ "$v_file" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && "$v_file" == "$v_swift" && "$v_file" == "$v_py" && "$v_file" == "$v_log" ]]; then
+  printf '  ok   version %s en VERSION, Paths.swift, __init__.py y CHANGELOG\n' "$v_file"
+else
+  printf '  FALLA la version diverge: VERSION=%s swift=%s python=%s changelog=%s\n' \
+    "$v_file" "$v_swift" "$v_py" "$v_log"
+  printf '        usa scripts/bump-version.sh X.Y.Z, que toca los cuatro\n'
   fail=1
 fi
 

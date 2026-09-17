@@ -40,6 +40,8 @@ public final class PetController: NSObject, NSApplicationDelegate {
     var fastStreamExits = 0
     var warnedAboutSocket = false
     var shellOffset: UInt64 = 0
+    /// Version publicada mas nueva que la que corre, si se supo. Para el menu.
+    var availableUpdate: Semver?
     var saveWorkItem: DispatchWorkItem?
 
     public override init() {
@@ -64,6 +66,7 @@ public final class PetController: NSObject, NSApplicationDelegate {
         startShellLogTail()
         startPolling()
         startNarration()
+        startUpdateCheck()
 
         activateConfiguredPet()
 

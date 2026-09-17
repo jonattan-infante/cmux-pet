@@ -23,6 +23,7 @@ KINDS = {
     "portUp":       {"port", "where"},
     "portDown":     {"port", "where"},
     "greeting":     set(),
+    "updateAvailable": {"version"},
 }
 
 _ALLOWED = set().union(*KINDS.values())

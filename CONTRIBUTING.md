@@ -16,13 +16,14 @@ zsh, los del instalador, la integridad del repo y la validación de las mascotas
 Es exactamente lo que corre CI. Si pasa, tu cambio es candidato; si no pasa, no
 existe.
 
-En GitHub son cuatro jobs, para que se lea de un vistazo qué falló:
+En GitHub son cinco jobs, para que se lea de un vistazo qué falló:
 
 | Job | Qué cubre |
 |---|---|
 | `build y tests` | compila y tests de lógica, en macOS 14 y 15 |
-| `shell e instalador` | hooks de zsh, instalación y desinstalación, integridad del repo |
+| `shell e instalador` | hooks de zsh, instalación y desinstalación, integridad del repo (incluida la versión) |
 | `mascotas y marketplace` | valida cada pet pack y el índice, clonando incluso los de terceros |
+| `port de Windows` | tests de lógica pura del port, en un runner de Windows |
 | `vista previa` | dibuja los estados y los sube como artefacto; no bloquea |
 
 ```bash
@@ -93,6 +94,21 @@ docs(adr): registrar el rechazo del socket bajo launchd
 ```
 
 Ramas: `<tipo>/<descripcion-corta-en-kebab>`.
+
+## Publicar una versión
+
+La versión es del producto, no de un binario: `VERSION` en la raíz es la fuente
+única y macOS y Windows llevan una copia que el gate compara. El contrato completo
+está en [`docs/reference/versioning.md`](docs/reference/versioning.md).
+
+1. Escribe la sección `## [X.Y.Z] — fecha` en `CHANGELOG.md`.
+2. `./scripts/bump-version.sh X.Y.Z` (toca `VERSION`, Swift y Python).
+3. PR normal: `make pr`, `make merge`.
+4. Con `main` al día: `make tag`. Empuja `vX.Y.Z` y CI crea el GitHub Release con
+   las notas del CHANGELOG. Si el tag no coincide con `VERSION`, no se publica nada.
+
+Desde ese momento el instalador de macOS clona esa versión, `--update` en Windows
+mueve el checkout a ella, y la mascota de quien tenga una anterior avisa una vez.
 
 ## Reportar un problema
 

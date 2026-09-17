@@ -3,15 +3,23 @@
 #   python pet.py              arranca la mascota flotante
 #   python pet.py --selftest   prueba de humo sin bloquear: alimenta eventos
 #                              sinteticos, verifica los estados y sale
+#   python pet.py --version    imprime la version del producto
 #
 # La logica vive en el paquete cmux_pet_win para que sea testeable; este archivo
 # solo arranca (como main.swift en macOS).
 
 import sys
-import tkinter as tk
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# Antes de tkinter: --version tiene que responder aunque falte la UI.
+if "--version" in sys.argv:
+    from cmux_pet_win import __version__
+    print(f"cmux-pet {__version__}")
+    raise SystemExit(0)
+
+import tkinter as tk  # noqa: E402
 
 from cmux_pet_win.app import App          # noqa: E402
 from cmux_pet_win.config import Config    # noqa: E402

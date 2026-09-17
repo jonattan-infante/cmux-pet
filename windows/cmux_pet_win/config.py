@@ -13,6 +13,7 @@ DEFAULTS = {
     "spriteHeight": 220,       # altura del sprite en px (para packs con GIF/PNG)
     "spotify": True,           # anunciar la cancion que suena (necesita winrt)
     "workspaceAliases": {},    # carpeta -> nombre corto para roster y burbujas
+    "checkUpdates": True,      # consultar una vez al dia si hay version nueva
 }
 
 

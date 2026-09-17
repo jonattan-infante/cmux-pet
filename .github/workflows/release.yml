@@ -1,0 +1,109 @@
+name: release
+
+# Una version existe cuando hay un tag vX.Y.Z y este workflow publica el release.
+# Si el tag no coincide con VERSION o el CHANGELOG no tiene sus notas, no se
+# publica nada: un tag sin release es un tag que no cuenta. Ver docs/adr/0006.
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+
+# El unico workflow que escribe en el repositorio, y solo releases.
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: el tag dice lo mismo que el repo
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag == VERSION
+        id: v
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          file="$(tr -d '[:space:]' < VERSION)"
+          if [[ "$tag" != "$file" ]]; then
+            echo "el tag dice $tag y VERSION dice $file; corre scripts/bump-version.sh y vuelve a etiquetar" >&2
+            exit 1
+          fi
+          grep -qE "^## \[$tag\]" CHANGELOG.md || { echo "CHANGELOG.md no tiene la seccion [$tag]" >&2; exit 1; }
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Integridad del repositorio
+        run: ./scripts/test-repo-integrity.sh
+
+      - name: Tests del port de Windows
+        run: python3 -m unittest discover -s tests -p "test_*.py"
+        working-directory: windows
+
+  macos:
+    name: binario de macOS
+    needs: verify
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compilar optimizado
+        run: swift build -c release
+
+      - name: El binario dice la version del tag
+        run: |
+          bin="$(swift build -c release --show-bin-path)/cmux-pet"
+          got="$("$bin" --version)"
+          [[ "$got" == "cmux-pet ${{ needs.verify.outputs.version }}" ]] \
+            || { echo "el binario dice '$got'" >&2; exit 1; }
+
+      - name: Empaquetar
+        run: |
+          v="${{ needs.verify.outputs.version }}"
+          bin="$(swift build -c release --show-bin-path)/cmux-pet"
+          stage="cmux-pet-$v-macos-arm64"
+          mkdir -p "$stage/bin"
+          cp "$bin" "$stage/bin/cmux-pet"
+          cp -R shell pets VERSION LICENSE "$stage/"
+          tar -czf "$stage.tar.gz" "$stage"
+          shasum -a 256 "$stage.tar.gz" > "$stage.tar.gz.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: cmux-pet-*-macos-arm64.tar.gz*
+          if-no-files-found: error
+
+  publish:
+    name: publicar el release
+    needs: [verify, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos
+          path: dist
+
+      # Las notas son la seccion del CHANGELOG de esta version, tal cual.
+      - name: Notas desde el CHANGELOG
+        run: |
+          v="${{ needs.verify.outputs.version }}"
+          awk -v v="$v" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          [[ -s notes.md ]] || { echo "notas vacias para $v" >&2; exit 1; }
+          cat notes.md
+
+      - name: Crear el release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${{ needs.verify.outputs.version }}"
+          gh release create "v$v" dist/* \
+            --title "cmux-pet $v" \
+            --notes-file notes.md \
+            --verify-tag

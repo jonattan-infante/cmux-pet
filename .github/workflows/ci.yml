@@ -87,6 +87,28 @@ jobs:
       - name: Validar mascotas e indice
         run: ./scripts/test-pet-packs.sh --remote
 
+  # El port de Windows es parte del producto, asi que su logica pura entra al
+  # gate con el mismo peso. Corre en Windows de verdad: tkinter y rutas con
+  # barra invertida son justo lo que un runner de macOS no ejercita.
+  windows:
+    name: port de Windows
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Tests de logica pura
+        run: python -m unittest discover -s tests -p "test_*.py"
+        working-directory: windows
+
+      - name: El programa dice su version
+        run: python pet.py --version
+        working-directory: windows
+
   # `make render` no entra al gate de correctitud: dibuja con AppKit y la
   # revision es a ojo. Pero que no explote si se puede comprobar, y las imagenes
   # quedan como artefacto para revisar una mascota nueva sin instalarla.

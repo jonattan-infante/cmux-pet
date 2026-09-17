@@ -14,6 +14,8 @@ public struct PetConfig: Codable {
     public var activePet: String? = nil
     /// Cada cuanto cuenta en que van los agentes mientras trabajan. 0 lo apaga.
     public var narrateEverySeconds: Double = 150
+    /// Consultar una vez al dia si hay una version publicada mas nueva.
+    public var checkUpdates: Bool = true
 
     public static func load() -> PetConfig {
         guard let d = try? Data(contentsOf: configURL),

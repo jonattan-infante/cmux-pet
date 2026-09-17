@@ -28,6 +28,7 @@ public enum PetCommands {
         case "validate", "check":return validate(rest)
         case "voice":            return voice(rest)
         case "search":           return search(rest)
+        case "update", "upgrade": return update(rest)
         case "help", "--help", "-h": return help()
         default:                 return nil
         }
@@ -78,6 +79,8 @@ public enum PetCommands {
           voice [<id>]                    reescribe sus frases con Claude Code
 
         \(bold("Otros"))
+          update                          reinstala la última versión publicada
+            --check                       solo dice si hay una más nueva
           --render <carpeta>              dibuja cada estado a PNG, sin abrir ventana
           --version
           help
@@ -507,6 +510,49 @@ public enum PetCommands {
         out("")
         out(dim("  * ya instalada.  Instalar: cmux-pet install <id> --use"))
         return 0
+    }
+
+    // MARK: update
+
+    static let installerURL =
+        "https://raw.githubusercontent.com/jonattan-infante/cmux-pet/main/install.sh"
+
+    /// `update --check` compara y dice; `update` reinstala con el mismo
+    /// instalador que usa la terminal. Que el instalador decida que version:
+    /// asi el CLI y el curl del README hacen exactamente lo mismo.
+    static func update(_ args: [String]) -> Int32 {
+        guard let current = Semver(cmuxPetVersion) else { return 1 }
+        out("cmux-pet \(current)")
+
+        let sem = DispatchSemaphore(value: 0)
+        var latest: Semver?
+        var problem: String?
+        UpdateCheck.fetchLatest { v, p in latest = v; problem = p; sem.signal() }
+        sem.wait()
+
+        if let problem = problem {
+            out(dim("  \(problem)"))
+        } else if let latest = latest {
+            out(latest > current ? "Hay una versión nueva: \(bold(latest.description))"
+                                 : "Estás en la última versión publicada.")
+        }
+        if args.contains("--check") { return 0 }
+        if let latest = latest, latest <= current, !args.contains("--force") {
+            out(dim("  para reinstalar igual: cmux-pet update --force"))
+            return 0
+        }
+
+        out("")
+        out("Reinstalando con \(dim(installerURL))")
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/bin/bash")
+        p.arguments = ["-c", "curl -fsSL \"\(installerURL)\" | bash"]
+        do { try p.run() } catch {
+            err("no pude ejecutar el instalador: \(error)")
+            return 1
+        }
+        p.waitUntilExit()
+        return p.terminationStatus
     }
 
     // MARK: reiniciar la app

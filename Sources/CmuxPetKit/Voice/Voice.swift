@@ -24,6 +24,7 @@ public final class Voice {
         "portUp":       ["port", "where"],
         "portDown":     ["port", "where"],
         "greeting":     [],
+        "updateAvailable": ["version"],
     ]
 
     /// Cuantas plantillas por clase se le piden al generador.
@@ -240,6 +241,7 @@ public final class Voice {
         - "portUp":       {port} {where}           un puerto empezó a escuchar
         - "portDown":     {port} {where}           un puerto se cerró
         - "greeting":     (ninguno)                saludo al arrancar
+        - "updateAvailable": {version}             hay una versión nueva de la propia mascota
 
         Cada clave debe tener un arreglo de \(batchPerKind) plantillas distintas entre sí.
 
@@ -251,6 +253,8 @@ public final class Voice {
         - {port} un número de puerto: "3000".
         - {doing} una frase con gerundio: "corriendo comandos", "editando archivos".
         - {what} un sustantivo: "un permiso para usar Bash", "una pregunta".
+        - {version} un número de versión: "0.3.0". Es una actualización del programa \
+          de la mascota; la frase debe invitar a actualizar.
         - {where} YA TRAE la preposición incluida (" en Fineract") o viene vacío.
 
         Reglas estrictas:

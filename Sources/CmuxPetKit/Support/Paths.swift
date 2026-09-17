@@ -2,7 +2,7 @@
 
 import Foundation
 
-public let cmuxPetVersion = "0.1.0"
+public let cmuxPetVersion = "0.2.0"
 
 let fm = FileManager.default
 let homeURL = fm.homeDirectoryForCurrentUser
@@ -18,6 +18,8 @@ public enum PetPaths {
     public static var shellLog: URL { home.appendingPathComponent("shell.jsonl") }
     public static var pid: URL { home.appendingPathComponent("pet.pid") }
     public static var sprites: URL { home.appendingPathComponent("sprites") }
+    /// Misma forma en macOS y Windows: ver docs/reference/versioning.md.
+    public static var update: URL { home.appendingPathComponent("update.json") }
 
     public static func ensureHome() {
         try? FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)

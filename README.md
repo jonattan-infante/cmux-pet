@@ -31,6 +31,22 @@ Necesitas macOS 13 o más, cmux, y Swift (viene con Xcode o con
 `xcode-select --install`). Abre una terminal de cmux y la mascota aparece en la
 esquina inferior derecha.
 
+## Actualizar
+
+La mascota avisa una vez cuando sale una versión nueva, con su propia voz. Después
+de eso, actualizar es un comando:
+
+```bash
+cmux-pet update            # macOS: reinstala la última publicada
+cmux-pet update --check    # solo dice si hay una más nueva
+```
+
+En Windows, desde la carpeta `windows/`: `python install.py --update`.
+
+La comprobación es una consulta al día a GitHub, en segundo plano. Se apaga con
+`"checkUpdates": false` en `~/.cmux-pet/config.json`. La versión que corre está
+en el menú contextual y en `cmux-pet --version`.
+
 ## Elegir mascota
 
 El programa es uno; las mascotas son muchas. Vienen dos instaladas:
