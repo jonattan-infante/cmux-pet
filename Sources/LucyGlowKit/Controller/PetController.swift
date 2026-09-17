@@ -35,11 +35,12 @@ public final class PetController: NSObject, NSApplicationDelegate {
     var knownPorts: [String: Set<Int>] = [:]
     var portsBaselineDone = false
 
-    var eventProcess: Process?
-    var eventCount = 0
-    var fastStreamExits = 0
-    var warnedAboutSocket = false
-    var shellOffset: UInt64 = 0
+    var sources: [EventSource] = []
+    var warnedSources: Set<String> = []
+    /// Costura de test: quien mira la terminal ahora mismo. En produccion, cmux.
+    var isCmuxFrontmost: () -> Bool = {
+        NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.cmuxterm.app"
+    }
     /// Version publicada mas nueva que la que corre, si se supo. Para el menu.
     var availableUpdate: Semver?
     var saveWorkItem: DispatchWorkItem?
@@ -61,9 +62,7 @@ public final class PetController: NSObject, NSApplicationDelegate {
         panel.orderFrontRegardless()
 
         startAnimation()
-        killStaleStreams()
-        startCmuxEventStream()
-        startShellLogTail()
+        startEventSources()
         startPolling()
         startNarration()
         startUpdateCheck()

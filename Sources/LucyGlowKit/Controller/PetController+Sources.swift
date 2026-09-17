@@ -1,77 +1,17 @@
-// Fuentes 2 y 3: comandos de shell, puertos y titulos de workspace.
+// Fuente 3: puertos y titulos de workspace, via RPC de cmux.
 
 import AppKit
 import Foundation
 
 extension PetController {
-    // MARK: fuente 2 — comandos de shell
-
-    func startShellLogTail() {
-        if !fm.fileExists(atPath: shellLogURL.path) {
-            fm.createFile(atPath: shellLogURL.path, contents: nil)
-        }
-        // Arrancar al final: no reproducir el historial al abrir.
-        let attrs = try? fm.attributesOfItem(atPath: shellLogURL.path)
-        shellOffset = (attrs?[.size] as? UInt64) ?? 0
-
-        let timer = Timer(timeInterval: 0.4, repeats: true) { [weak self] _ in
-            self?.drainShellLog()
-        }
-        RunLoop.main.add(timer, forMode: .common)
-    }
-
-    func drainShellLog() {
-        guard let attrs = try? fm.attributesOfItem(atPath: shellLogURL.path),
-              let size = attrs[.size] as? UInt64 else { return }
-        if size == shellOffset { return }
-        if size < shellOffset { shellOffset = 0 }   // el archivo rotó
-
-        guard let fh = try? FileHandle(forReadingFrom: shellLogURL) else { return }
-        defer { try? fh.close() }
-        try? fh.seek(toOffset: shellOffset)
-        let data = fh.readDataToEndOfFile()
-        shellOffset = size
-
-        for line in data.split(separator: 0x0A) {
-            guard let obj = (try? JSONSerialization.jsonObject(with: Data(line))) as? [String: Any]
-            else { continue }
-            handleShellEvent(obj)
-        }
-    }
+    // MARK: supresion por pane
 
     /// Estas mirando ese pane exacto ahora mismo: no tiene sentido avisarte de lo
     /// que ya ves. Deliberadamente es a nivel de pane y no de workspace: un
     /// workspace tiene muchas pestañas y silenciarlo entero se traga casi todo.
     func userIsWatching(_ surfaceId: String?) -> Bool {
         guard let s = surfaceId, s == focusedSurface else { return false }
-        return NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.cmuxterm.app"
-    }
-
-    func handleShellEvent(_ e: [String: Any]) {
-        guard (e["kind"] as? String) == "command" else { return }
-        if !config.notifyWhileWatching && userIsWatching(e["surface"] as? String) {
-            plog("suprimido (mirando el pane): \((e["command"] as? String) ?? "")")
-            return
-        }
-        let status = (e["status"] as? Int) ?? 0
-        let seconds = (e["seconds"] as? Double) ?? 0
-        let command = truncate((e["command"] as? String) ?? "", 56)
-        let wsId = e["workspace"] as? String
-        let ws = Wording.at(workspaceLabel(wsId))
-
-        if status != 0 {
-            show(Bubble(mood: .error,
-                        text: Voice.shared.phrase("commandError", [
-                            "cmd": command, "code": "\(status)", "where": ws,
-                        ]) ?? Wording.plain("\(command) falló con código \(status)\(ws)."),
-                        workspaceId: wsId, sticky: false))
-        } else {
-            show(Bubble(mood: .done,
-                        text: Voice.shared.phrase("commandDone", [
-                            "cmd": command, "time": humanDuration(seconds), "where": ws,
-                        ]) ?? Wording.plain("\(command) terminó en \(humanDuration(seconds))\(ws)."),
-                        workspaceId: wsId, sticky: false))
-        }
+        return isCmuxFrontmost()
     }
 
     // MARK: fuente 3 — puertos y titulos de workspace

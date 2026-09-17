@@ -13,7 +13,8 @@ dependencias; en Windows observa Claude Code directamente.
    - toco el formato de paquete → `docs/reference/pet-pack.md` (es el contrato)
    - toco el marketplace → `docs/marketplace.md`
    - toco el dibujo o la animación → `ARCHITECTURE.md` §Vistas
-   - toco eventos de cmux → `ARCHITECTURE.md` §Fuentes + `docs/reference/cmux-events.md`
+   - toco una fuente de eventos (cmux, hooks, o agrego una nueva) →
+     `docs/reference/event-source.md` (es el contrato) + `docs/reference/cmux-events.md`
    - toco los textos o la voz → `docs/adr/0002` y `docs/adr/0005`
    - decido si avisar o callar → `docs/adr/0004`
    - toco la versión, el release o el aviso de actualización → `docs/reference/versioning.md`
@@ -99,6 +100,9 @@ lucy update [--check]         # reinstalar la última publicada; --check solo co
 21. **Los tags siguen las reglas de `docs/reference/tags.md`, sin excepciones.**
     Ver la sección siguiente: es obligatoria para cualquier agente de IA que
     trabaje en este repo, no solo para Claude Code.
+22. **Una fuente de eventos (`EventSource`) nunca decide mood ni compone
+    texto.** Traduce su transporte a `NormalizedEvent`; el orquestador decide
+    todo lo demás. Ver `docs/reference/event-source.md` y `docs/adr/0008`.
 
 ## Reglas de tags — obligatorio para cualquier agente de IA
 
@@ -148,8 +152,10 @@ que un pack está bien.
 | `Sources/LucyGlowKit/CLI/` | subcomandos, scaffolding y registro del marketplace |
 | `Sources/LucyGlowKit/Voice/` | frases de la mascota activa y composición del prompt |
 | `Sources/LucyGlowKit/Views/` | renderer vectorial, sprites, burbuja, panel de estado |
-| `Sources/LucyGlowKit/Controller/` | orquestador, dividido por fuente de eventos |
-| `Sources/LucyGlowKit/Support/` | rutas, puente con el CLI de cmux, formateo |
+| `Sources/LucyGlowKit/Controller/EventSource.swift` | contrato `EventSource` y `NormalizedEvent` |
+| `Sources/LucyGlowKit/Controller/Sources/` | adapters: `CmuxEventSource`, `ShellHookEventSource` |
+| `Sources/LucyGlowKit/Controller/` | orquestador: ingiere eventos normalizados, decide mood y texto |
+| `Sources/LucyGlowKit/Support/` | rutas, puente con el CLI de cmux, tailer de archivos, formateo |
 | `pets/` | mascotas incluidas: `astro`, `gatito`, `cangrejo` y `llama` |
 | `windows/` | port para Windows en Python: mismos packs, mismo contrato de voz y de versión |
 | `VERSION` | la versión del producto; `CHANGELOG.md` lleva sus notas |

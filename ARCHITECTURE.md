@@ -94,19 +94,30 @@ Contrato con los packs, en dos direcciones:
 Consecuencia práctica: una regla nueva del contrato aplica a **todas** las
 mascotas existentes sin tocarlas.
 
-## Las cuatro fuentes de eventos
+## Las fuentes de eventos
+
+Dos de las cuatro fuentes originales son `EventSource` (protocolo en
+`Controller/EventSource.swift`, contrato en `docs/reference/event-source.md`,
+decisión en `docs/adr/0008`): traducen su transporte a `NormalizedEvent` y el
+orquestador (`PetController.ingest`) es el único que decide mood y texto. Las
+otras dos no encajan en ese contrato (no producen eventos discretos de
+agente/comando) y siguen cableadas al controller.
 
 | Fuente | Mecanismo | Qué aporta | Archivo |
 |---|---|---|---|
-| Eventos de cmux | subproceso `cmux events --reconnect`, lectura por líneas | agentes que arrancan, terminan, piden permiso; foco de pane; notificaciones | `PetController+Events.swift` |
-| RPC de cmux | `cmux rpc <método>` sincrónico en cola de fondo | texto real de notificaciones, títulos de workspace, puertos escuchando | `PetController+Sources.swift` |
-| Shell del usuario | hooks zsh que hacen append a `shell.jsonl`; la app hace tail | comandos largos y exit codes | `shell/pet.zsh` |
+| Eventos de cmux (`EventSource`) | subproceso `cmux events --reconnect`, lectura por líneas | agentes que arrancan, terminan, piden permiso; foco de pane; notificaciones | `Controller/Sources/CmuxEventSource.swift` |
+| Shell del usuario (`EventSource`) | hooks zsh que hacen append a `shell.jsonl`; tail cada 0.4 s | comandos largos y exit codes | `Controller/Sources/ShellHookEventSource.swift` |
+| RPC de cmux | `cmux rpc <método>` sincrónico en cola de fondo, cada 10 s | títulos de workspace, puertos escuchando | `PetController+Sources.swift` |
 | Reloj | timers | narración periódica, barrida de sesiones fantasma | `PetController+Bubbles.swift` |
 
 Por qué un archivo plano para el shell y no un socket o un FIFO: un append nunca
 bloquea el prompt del usuario. Un FIFO sin lector bloquea al abrir, y un socket
 implica un servidor. El precio de la simplicidad es un poll de 400 ms, que es
 gratis.
+
+Agregar una fuente nueva (OpenCode, wmux) es escribir una clase que implemente
+`EventSource`, sin tocar `ingest` salvo que traiga un evento que el vocabulario
+de `docs/reference/event-source.md` todavía no cubra.
 
 ## El marketplace
 
