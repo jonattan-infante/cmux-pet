@@ -56,32 +56,47 @@ La máquina del autor quedó con `cmux-pet 0.2.0` instalado desde esta rama y si
 `update.json` (se borró al terminar la prueba para que la primera consulta real
 ocurra sola).
 
-**`v0.2.0` está publicado.** `make tag` empujó el tag y `release.yml` corrió por
-primera vez en verde (run 35236336097): release con el tarball de macOS y su
-sha256. `cmux-pet update --check` contra GitHub real:
+**`v0.2.2` está publicado, con release real.** El primer intento (`v0.2.1`) reveló
+un bug genuino en `release.yml`: GitHub Actions entrega el ref de un tag
+apuntando al commit que señala, no al objeto tag anotado, así que
+`check-tag.sh` en CI decía "es un tag ligero" para un tag que localmente es
+anotado y firmado. Reproducido con un remoto de prueba y corregido con
+`git fetch --tags --force origin` justo después del checkout (PR #9).
+
+`v0.2.1` se documentó como no publicado en el CHANGELOG y se quedó en GitHub
+sin borrarse, siguiendo la regla de inmutabilidad que este mismo repo exige.
+`v0.2.2` corrió los tres jobs de `release.yml` en verde:
 
 ```
-cmux-pet 0.2.0
-Estás en la última versión publicada.
+el tag dice lo mismo que el repo: success
+binario de macOS: success
+publicar el release: success
+gh release view v0.2.2 -> draft=false prerelease=false
+assets: cmux-pet-0.2.2-macos-arm64.tar.gz, cmux-pet-0.2.2-macos-arm64.tar.gz.sha256
 ```
 
-Desde entonces hay **reglas de tags** (`docs/reference/tags.md`): anotado, firmado
-con SSH, notas del CHANGELOG en el mensaje, desde `main`, inmutable. Las verifica
-`scripts/check-tag.sh` (19 casos en `test-release-tooling.sh`, dentro del gate),
-`make tag` antes de empujar y `release.yml` antes de publicar. Un ruleset en GitHub
-(`tags de version`, id 23606182) impide crear, mover o borrar `v*` sin rol de
-administrador. La firma SSH está configurada solo en este repo
-(`git config gpg.format ssh`, llave `~/.ssh/id_ed25519_github.pub`) y probada con
-un tag local que se borró sin empujar.
+Y el ciclo completo, de punta a punta en la máquina del autor:
 
-`v0.2.0` es anterior a las reglas (sin notas ni firma) y por inmutabilidad se
-queda así.
+```
+cmux-pet --version              -> cmux-pet 0.2.0  (instalado antes de publicar)
+cmux-pet update --check         -> Hay una versión nueva: 0.2.2
+cmux-pet update                 -> clona v0.2.2 del release real
+cmux-pet --version              -> cmux-pet 0.2.2
+cmux-pet update --check         -> Estás en la última versión publicada.
+```
+
+El bypass de administrador del ruleset de tags también quedó probado dos veces
+(GitHub reporta "Bypassed rule violations" en cada push de tag).
+
+Rama `docs/reglas-de-tags-para-agentes-ia` (PR #7) llevó las reglas de tags a
+`CLAUDE.md` como sección obligatoria para cualquier agente de IA, no solo un
+punto entre otros veinte.
 
 ## Próximo paso
 
-**Que el primer `make tag` bajo las reglas sea `v0.3.0`** (F4): probará la firma,
-las notas en el mensaje, `check-tag.sh` en CI y el bypass del ruleset. Antes,
-registrar la llave como signing key en GitHub (B14) para que aparezca "Verified":
+**Registrar la llave como signing key en GitHub** (B14), para que `v0.2.2` y los
+tags que siguen aparezcan "Verified" en vez de "Unverified" (siguen siendo
+válidos sin esto; es solo la insignia visual):
 
 ```
 gh auth refresh -h github.com -s admin:ssh_signing_key
@@ -102,6 +117,7 @@ Windows real (R9), y marcar el job `port de Windows` como check obligatorio (B13
 | 2026-08-02 | Comandos `sprite` y `fork`; renderers `vector:ball` y `vector:sage`; port de Windows en Python (PRs #2, #3, #4) |
 | 2026-09-17 | La versión es del producto: `VERSION`, guarda de integridad, release por tag, instalador al último release, y aviso de versión nueva con el mismo contrato en macOS y Windows (`docs/adr/0006`) |
 | 2026-09-17 | Primer release: `v0.2.0`. README reescrito. Reglas de tags con `check-tag.sh`, `next-version`, `release-notes`, firma SSH y ruleset en GitHub (`docs/reference/tags.md`) |
+| 2026-09-17 | Reglas de tags obligatorias en `CLAUDE.md` para cualquier agente de IA (PR #7). Primer tag bajo las reglas (`v0.2.1`) reveló un bug real de CI con tags anotados; corregido y publicado como `v0.2.2` (PR #9), con el ciclo de `cmux-pet update` probado de punta a punta contra el release real |
 
 ## Trampas que ya costaron tiempo
 
@@ -134,11 +150,16 @@ No volver a caer en estas. Todas están documentadas con evidencia en
     tests de Windows no corrían ni en `make verify` ni en CI.
 11. **`Config` de Windows descarta claves desconocidas.** Una preferencia nueva que
     no esté en `DEFAULTS` se pierde en el siguiente `save()`.
-12. **El remote no tenía refspec de fetch** (`remote.origin.fetch` vacío), así que
+12. **GitHub Actions entrega el ref de un tag apuntando al commit, no al
+    objeto tag anotado.** Un `check-tag.sh` que pasa en local puede fallar en
+    CI por esto solo. `git fetch --tags --force origin` después del checkout
+    lo corrige. Costó publicar dos veces (`v0.2.1` se perdió, `v0.2.2` es la
+    real).
+13. **El remote no tenía refspec de fetch** (`remote.origin.fetch` vacío), así que
     `origin/main` no existía en local y `git fetch` solo movía `FETCH_HEAD`. Se
     arregló con `git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'`.
     `make tag` depende de `origin/main`.
-13. **`git branch -d` no borra una rama mergeada por squash**: para git no está
+14. **`git branch -d` no borra una rama mergeada por squash**: para git no está
     "fully merged". Es `-D`, tras comprobar que el PR entró.
 
 ## Checklist de fin de sesión
