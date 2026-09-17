@@ -30,6 +30,7 @@ Windows 10/11 · Python 3 (viene tkinter) · sin dependencias que instalar.
 | Estado en disco bajo `~/.cmux-pet` | `%USERPROFILE%\.cmux-pet` |
 | UI en AppKit (`NSPanel`, `NSView`) | tkinter (`Canvas`, `-transparentcolor`) |
 | Arranque desde el shell (no launchd) | autoarranque desde el hook `SessionStart` |
+| Aviso de versión nueva (`docs/reference/versioning.md`) | idéntico: mismo endpoint, mismo `update.json`, mismos casos de prueba |
 
 Una diferencia a favor de Windows: los hooks de Claude Code **sí** entregan
 `tool_input`, así que el aviso de un comando que falla puede mostrar el comando
@@ -60,6 +61,20 @@ Para quitar los hooks:
 python install.py --uninstall
 ```
 
+## Actualizar
+
+La mascota avisa una vez cuando hay una versión publicada más nueva que la que
+corre (el contrato es el mismo que en macOS: `docs/reference/versioning.md`).
+Como en Windows corre desde este checkout, actualizar es moverlo al tag publicado:
+
+```powershell
+python install.py --update     # git fetch + checkout vX.Y.Z, re-registra hooks
+python pet.py --version        # que version corre
+```
+
+`--update` se niega si hay cambios sin commit en el checkout. La comprobación se
+apaga con `"checkUpdates": false` en `config.json`.
+
 ## Qué hace
 
 - **Avisa cuando Claude termina** su turno (`Stop`), y en qué workspace.
@@ -86,7 +101,8 @@ o edita `%USERPROFILE%\.cmux-pet\config.json`:
   "activePet": "gatito",
   "quiet": false,
   "narrateEverySeconds": 150,
-  "position": null
+  "position": null,
+  "checkUpdates": true
 }
 ```
 
@@ -102,6 +118,7 @@ Todo el código está en `cmux_pet_win/`, dividido igual que el proyecto macOS:
 | `state.py` | los seis estados y la máquina que los resuelve | `Model/Mood.swift` + Controller |
 | `voice.py` | carga del pet pack y relleno de plantillas | `Voice/Voice.swift` + `Model/PetPack.swift` |
 | `config.py` | `config.json` | `Model/Config.swift` |
+| `update.py` | versión publicada, regla de silencio, estado `update.json` | `Model/Update.swift` |
 | `ui.py` | ventana flotante, droide vectorial, burbuja, roster | `Views/` |
 | `app.py` | orquestador: conecta fuente, estado y vista | `Controller/PetController.swift` |
 | `hooks/cmux-pet-hook.ps1` | el hook que Claude Code ejecuta en cada evento | `shell/pet.zsh` |

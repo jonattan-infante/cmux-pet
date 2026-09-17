@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "gatito",
   "name": "Gatito",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "jonattan-infante",
   "description": "Un gato de terminal: le da igual tu build, pero te avisa.",
   "license": "MIT",

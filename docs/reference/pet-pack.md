@@ -140,7 +140,8 @@ con `phrases.json` funciona sin conexión y sin Claude Code**.
   "attention":    ["*bip! bip!* {agent} necesita {what}{where}."],
   "working":      ["*whirr* {agent} lleva {time}{where} {doing}."],
   "portUp":       ["*blip* el puerto {port} está escuchando{where}."],
-  "portDown":     ["*blip* el puerto {port} se cerró{where}."]
+  "portDown":     ["*blip* el puerto {port} se cerró{where}."],
+  "updateAvailable": ["*bip* hay una versión nueva de cmux-pet: {version}."]
 }
 ```
 
@@ -158,6 +159,7 @@ que le falte uno se descarta al validar.
 | `attention` | `{agent}` `{what}` `{where}` | `{what}` es un sustantivo: `"un permiso para usar Bash"` |
 | `working` | `{agent}` `{doing}` `{time}` `{where}` | `{doing}` es gerundio: `"corriendo comandos"` |
 | `portUp` / `portDown` | `{port}` `{where}` | `"3000"` |
+| `updateAvailable` | `{version}` | `"0.3.0"`: hay una versión nueva del programa; la frase invita a actualizar |
 
 Dos reglas que cuestan errores si se olvidan:
 

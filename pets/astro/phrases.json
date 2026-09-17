@@ -36,5 +36,9 @@
   "portDown": [
     "*brrrp* El puerto {port} se cerró{where}.",
     "*blip* {port} dejó de escuchar{where}."
+  ],
+  "updateAvailable": [
+    "*bip-bip* Hay una versión nueva de cmux-pet: {version}. Solicito actualización de firmware.",
+    "*whirr* Salió cmux-pet {version}. Mis circuitos piden esa mejora."
   ]
 }

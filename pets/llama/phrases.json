@@ -36,5 +36,9 @@
   "portDown": [
     "El puerto {port} se callo{where}.",
     "{port} dejo de escuchar{where}. Silencio."
+  ],
+  "updateAvailable": [
+    "Nuevo drop: cmux-pet {version}. Actualízame y seguimos con el beat.",
+    "Salió cmux-pet {version}. Ese remix hay que escucharlo, actualízame."
   ]
 }

@@ -3,6 +3,39 @@
 Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 Versionado semántico.
 
+## [0.2.0] — 2026-09-17
+
+### Agregado
+
+- **La versión es del producto.** `VERSION` en la raíz es la fuente única; el
+  binario de macOS y el paquete de Python llevan una copia que
+  `scripts/bump-version.sh` mantiene y que el gate de integridad compara.
+- **Publicación por tag.** Empujar `vX.Y.Z` crea el GitHub Release con las notas
+  de este archivo, tras verificar que tag, `VERSION` y CHANGELOG coinciden.
+  `make tag` hace el paso humano desde `main`.
+- **La mascota avisa cuando hay una versión nueva**, en macOS y en Windows: una
+  consulta al día como máximo, fuera del hilo principal, y un solo aviso por
+  versión. Se apaga con `checkUpdates: false`. Estado en `~/.cmux-pet/update.json`.
+- Clase de frase `updateAvailable` con marcador `{version}`, en el contrato de
+  voz y en las cuatro mascotas incluidas.
+- `cmux-pet update` (macOS) reinstala la última versión publicada;
+  `cmux-pet update --check` solo compara. En Windows, `python install.py --update`
+  mueve el checkout al tag publicado y `python pet.py --version` dice cuál corre.
+- El instalador de macOS clona la última versión publicada en vez de `main`;
+  `CMUX_PET_VERSION` fija una versión o la rama.
+- Comandos `sprite` para ponerle imagen a una mascota (`--dir`, `--clear`) y
+  `fork` para sacar una copia editable de una incluida.
+- Renderers integrados `vector:ball` y `vector:sage`, además de `vector:droid`;
+  `cmux-pet renderers` los lista.
+- Mascotas incluidas `cangrejo` y `llama`, con sprites propios.
+- Port para Windows en `windows/`: observa Claude Code por sus hooks, reusa los
+  mismos packs y el mismo contrato de voz. Sus tests entran a `make verify` y a CI.
+
+### Cambiado
+
+- La sección "Actualizar" del README explica el aviso y cómo actualizar en cada
+  plataforma.
+
 ## [0.1.0] — 2026-07-31
 
 Primera versión.

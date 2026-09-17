@@ -7,12 +7,14 @@
 
 import os
 import random
+import sys
 import threading
 import time
 import tkinter as tk
 
 from . import notebook as notebookmod
-from . import paths, sound, voice as voicemod, nowplaying
+from . import paths, sound, voice as voicemod, nowplaying, update as updatemod, wording
+from . import __version__
 from .config import Config
 from .events import Tailer
 from . import state as statemod
@@ -24,6 +26,10 @@ FRAME_MS = 40                      # ~25 fps: fluido y barato
 # cada recordatorio es propio de cada tarea (ver notebook.due_todo_reminders);
 # esto solo evita leer el JSON del disco en cada uno de los ticks de 40ms.
 TODO_SCAN_SECONDS = 30
+# Cada cuanto se plantea consultar si hay version nueva. La consulta real la
+# limita update.should_query a una por dia; esto es solo el reloj del tick.
+UPDATE_SCAN_SECONDS = 6 * 3600
+UPDATE_FIRST_DELAY = 30            # no competir con el saludo al arrancar
 
 # Frases para anunciar lo que suena en Spotify. Encajan con su onda de DJ.
 SONG_LINES = [
@@ -50,6 +56,10 @@ class App:
         self._last_narrate = 0.0
         self._notebook = None
         self._last_todo_scan = 0.0
+        self._started_at = time.time()
+        self._last_update_scan = None
+        self._update_checker = updatemod.Checker()
+        self.available_update = None    # tupla semver, para el menu
 
         # Spotify (opcional): lee que suena en Windows y lo anuncia al cambiar.
         self._np = nowplaying.Poller()
@@ -95,6 +105,7 @@ class App:
         self._maybe_narrate(now)
         self._maybe_song(now)
         self._maybe_todo_reminder(now)
+        self._maybe_update(now)
         mood = self.sm.mood(now)
         self.window.set_mood(mood)
         self.window.set_roster(self.sm.roster(now))
@@ -149,6 +160,33 @@ class App:
             return
         self._play_reminder_sound()
         self.window.show_bubble(self._todo_reminder_phrase(due), now, seconds=10.0)
+
+    def _maybe_update(self, now):
+        # Fuente extra: la version publicada. Contrato en docs/reference/versioning.md.
+        # Primero se recoge lo que haya traido el hilo; despues se decide si
+        # lanzar otra consulta.
+        result = self._update_checker.take()
+        if result is not None:
+            latest, problem = result
+            current = updatemod.parse(__version__)
+            announce, state = updatemod.decide(current, latest, updatemod.UpdateState.load())
+            state.save()
+            if latest and current and latest > current:
+                self.available_update = latest
+                self.window.on_menu["items"] = self._menu_items()
+            if announce and not self.config["quiet"]:
+                text = (self.voice.phrase("updateAvailable", {"version": updatemod.fmt(announce)})
+                        or wording.update_available(updatemod.fmt(announce)))
+                self.window.show_bubble(text, now, seconds=10.0)
+        if not self.config.get("checkUpdates", True):
+            return
+        if now - self._started_at < UPDATE_FIRST_DELAY:
+            return
+        if self._last_update_scan is not None and now - self._last_update_scan < UPDATE_SCAN_SECONDS:
+            return
+        self._last_update_scan = now
+        if updatemod.should_query(updatemod.UpdateState.load()):
+            self._update_checker.start()
 
     def _play_reminder_sound(self):
         # Campanita suave sintetizada (ver sound.py). Antes eran dos Beep() de
@@ -220,8 +258,21 @@ class App:
         quiet_label = "Reactivar avisos" if self.config["quiet"] else "Silenciar avisos"
         items.append((quiet_label, self._toggle_quiet))
         items.append(("-", None))
+        if self.available_update:
+            items.append((f"Actualizar a v{updatemod.fmt(self.available_update)}",
+                          self._run_update))
+        items.append((f"cmux-pet v{__version__}", None))
         items.append(("Salir", self._quit))
         return items
+
+    def _run_update(self):
+        # El instalador mueve el checkout al tag publicado y esta mascota se
+        # apaga; el hook SessionStart arranca la nueva.
+        import subprocess
+        self.window.show_bubble("Actualizando. Cierro y vuelvo con la version nueva.",
+                                time.time(), seconds=8.0)
+        subprocess.Popen([sys.executable, str(paths.REPO_ROOT / "windows" / "install.py"),
+                          "--update"], creationflags=getattr(subprocess, "DETACHED_PROCESS", 0))
 
     def _toggle_spotify(self):
         on = not self.config.get("spotify", True)

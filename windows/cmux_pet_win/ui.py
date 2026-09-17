@@ -584,7 +584,9 @@ class PetWindow:
             if label == "-":
                 menu.add_separator()
             else:
-                menu.add_command(label=label, command=cb)
+                # Sin callback es una linea informativa (la version), no un boton.
+                menu.add_command(label=label, command=cb,
+                                 state="normal" if cb else "disabled")
         try:
             menu.tk_popup(e.x_root, e.y_root)
         finally:

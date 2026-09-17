@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "llama",
   "name": "Llama",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "jonattan-infante",
   "description": "Una llama con audifonos que mueve la cabeza mientras vigila tus agentes.",
   "license": "MIT",

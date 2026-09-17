@@ -57,6 +57,7 @@ requiriera Swift, no habría más de una.
 | "llévame ahí" | un click salta al workspace del aviso y trae cmux al frente |
 | "quiero otra mascota" | `cmux-pet search` y `cmux-pet install <id> --use` |
 | "quiero hacer la mía" | `cmux-pet new mi-mascota`, editar un archivo, listo |
+| "¿salió una versión nueva?" | la mascota avisa una vez, con su voz; `cmux-pet update` la trae. Igual en Windows |
 
 ## Qué NO es
 

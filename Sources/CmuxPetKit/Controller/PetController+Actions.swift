@@ -85,6 +85,13 @@ extension PetController {
 
         menu.addItem(.separator())
 
+        if let v = availableUpdate {
+            let upd = NSMenuItem(title: "Actualizar a v\(v)", action: #selector(runUpdate),
+                                 keyEquivalent: "")
+            upd.target = self
+            menu.addItem(upd)
+        }
+
         let petLine = NSMenuItem(title: PetTheme.shared.pack.map { "\($0.name) v\($0.version)" }
                                     ?? "sin mascota instalada",
                                  action: nil, keyEquivalent: "")
@@ -94,6 +101,10 @@ extension PetController {
         let status = NSMenuItem(title: statusLine(), action: nil, keyEquivalent: "")
         status.isEnabled = false
         menu.addItem(status)
+
+        let versionLine = NSMenuItem(title: "cmux-pet v\(cmuxPetVersion)", action: nil, keyEquivalent: "")
+        versionLine.isEnabled = false
+        menu.addItem(versionLine)
 
         menu.addItem(.separator())
 

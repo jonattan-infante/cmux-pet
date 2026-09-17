@@ -8,6 +8,7 @@
 set -euo pipefail
 
 REPO_URL="https://github.com/jonattan-infante/cmux-pet.git"
+LATEST_URL="https://api.github.com/repos/jonattan-infante/cmux-pet/releases/latest"
 RAW_URL="https://raw.githubusercontent.com/jonattan-infante/cmux-pet/main/install.sh"
 PREFIX="${CMUX_PET_PREFIX:-$HOME/.cmux-pet}"
 ZSHRC="${ZDOTDIR:-$HOME}/.zshrc"
@@ -71,9 +72,22 @@ if [[ "${1:-}" == "--from-source" ]]; then
 else
   command -v git >/dev/null || die "falta git"
   SRC="$(mktemp -d)/cmux-pet"
-  info "clonando $REPO_URL"
-  git clone --depth 1 "$REPO_URL" "$SRC" >/dev/null 2>&1 \
-    || die "no pude clonar el repositorio"
+  # Se instala la ultima version PUBLICADA, no main: asi lo que corre coincide
+  # con lo que la mascota anuncia. Ver docs/reference/versioning.md.
+  #   CMUX_PET_VERSION=v0.3.0  fija una version
+  #   CMUX_PET_VERSION=main    sigue la rama
+  REF="${CMUX_PET_VERSION:-}"
+  if [[ -z "$REF" ]]; then
+    REF="$(curl -fsSL --max-time 10 -H 'Accept: application/vnd.github+json' "$LATEST_URL" 2>/dev/null \
+      | /usr/bin/sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+    if [[ -z "$REF" ]]; then
+      warn "no encontre una version publicada (sin releases o sin red): instalo main"
+      REF="main"
+    fi
+  fi
+  info "clonando $REPO_URL ($REF)"
+  git clone --depth 1 --branch "$REF" "$REPO_URL" "$SRC" >/dev/null 2>&1 \
+    || die "no pude clonar el repositorio en $REF"
 fi
 
 # -------------------------------------------------------------------- build
@@ -91,7 +105,7 @@ mkdir -p "$PREFIX"/{bin,shell,pets,voices}
 pkill -f "$PREFIX/bin/cmux-pet" 2>/dev/null || true
 install -m 755 "$BUILT" "$PREFIX/bin/cmux-pet"
 install -m 644 shell/pet.zsh "$PREFIX/shell/pet.zsh"
-info "instalado en $PREFIX/bin/cmux-pet"
+info "instalado $("$PREFIX/bin/cmux-pet" --version) en $PREFIX/bin/cmux-pet"
 
 # Las mascotas que vienen con el repositorio. Se marcan con .bundled y se
 # reemplazan al actualizar; sus frases generadas viven aparte en voices/.
@@ -170,6 +184,7 @@ cat <<EOF
     click derecho    opciones
 
   En terminales que ya tenías abiertas:  source ~/.zshrc
+  Actualizar:                            cmux-pet update
   Log:                                   tail -f $PREFIX/pet.log
 EOF
 

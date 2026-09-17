@@ -6,55 +6,70 @@
 
 ## Estado verificado
 
-Fecha: **2026-07-31**
+Fecha: **2026-09-17**
 
-El proyecto ya no es "un droide": es una **plataforma de mascotas**. El programa
-decide cuándo hablar y en qué estado está; un paquete instalable decide cómo se ve
-y cómo habla. El marketplace es un JSON en el repo, sin servidor.
+El proyecto es una **plataforma de mascotas con dos runtimes**: macOS en Swift y
+Windows en Python (`windows/`). Desde esta sesión la **versión es del producto**
+(`VERSION` = `0.2.0`) y **la mascota avisa una vez cuando hay una versión publicada
+más nueva**, con el mismo contrato en las dos plataformas
+(`docs/reference/versioning.md`, `docs/adr/0006`).
 
-Baseline verde, verificado con comandos:
-
-```
-make verify                       -> compila + 52 tests + 8 hooks + 12 instalador + 13 integridad + 7 mascotas
-./.build/debug/cmux-pet --version -> cmux-pet 0.1.0
-make render                       -> 15 PNG en ./render
-./install.sh --from-source        -> instalado y corriendo en la maquina del autor
-CI                                -> 5 jobs verdes, incluida la validacion del marketplace
-```
-
-El asistente que corre en la máquina del autor es **el binario que produce este
-repo**, con `gatito` como mascota activa.
-
-La prueba de que la plataforma es genérica, del log real:
+Baseline verde, verificado con comandos en la rama
+`feat/versiones-y-aviso-de-actualizacion`:
 
 ```
-mascota activa: Gatito (gatito) v1.0.0, renderer vector:droid
-aviso: [info]  Mrrp. Estoy aquí, supongo que vigilando.
-aviso: [error] npm run build se rompió, código 1 en Fineract. No fui yo.
+make verify                          -> compila + 84 tests Swift + 8 hooks + 12 instalador
+                                        + 15 integridad + 11 mascotas + 51 tests Python
+./.build/debug/cmux-pet --version    -> cmux-pet 0.2.0
+python3 windows/pet.py --version     -> cmux-pet 0.2.0
+./.build/debug/cmux-pet update --check -> "sin versiones publicadas todavía", salida 0
+actionlint release.yml               -> limpio
 ```
 
-Y `cmux-pet voice gatito` produjo 64 frases con voz felina desde `persona.md`, sin
-tocar una línea de Swift:
+Guarda de versión probada en negativo: con `__init__.py` en `0.1.0`,
+`test-repo-integrity.sh` dice
+`FALLA la version diverge: VERSION=0.2.0 swift=0.2.0 python=0.1.0 changelog=0.2.0`.
+
+El aviso, de punta a punta en la máquina real, con
+`CMUX_PET_UPDATE_URL=file://…/latest.json` (`{"tag_name":"v9.9.9"}`):
 
 ```
-{cmd} explotó{where}, código {code}, fffs. Vuelvo a mi caja.
-{agent} lleva {time} {doing}{where}. Yo llevo el mismo tiempo sin moverme del sol.
+[14:12:23Z] aviso: [info] *dwoo-weep* Reactivada. A vigilar tus procesos.
+[14:12:53Z] actualizaciones: hay 9.9.9, corre 0.2.0
+[14:12:53Z] aviso: [info] Hay una versión nueva de cmux-pet: 9.9.9. Corre: cmux-pet update
+~/.cmux-pet/update.json -> { "announced": "9.9.9", "checkedAt": "2026-09-17T14:12:53Z", "latest": "9.9.9" }
+segundo arranque                -> 0 avisos de actualización (ver abajo)
 ```
+
+Ese primer aviso salió con el texto neutro del programa porque el pack instalado
+en `~/.cmux-pet/pets/` era la copia anterior, sin la clase `updateAvailable`.
+Tras `./install.sh --from-source` (binario y packs en 0.2.0, máquina del autor),
+la misma prueba lo dijo con la voz de la mascota activa:
+
+```
+[14:14:53Z] mascota activa: Astro (astro) v1.1.0, renderer vector:droid
+[14:15:23Z] actualizaciones: hay 9.9.9, corre 0.2.0
+[14:15:23Z] aviso: [info] *bip-bip* Hay una versión nueva de cmux-pet: 9.9.9. Solicito actualización de firmware.
+```
+
+La máquina del autor quedó con `cmux-pet 0.2.0` instalado desde esta rama y sin
+`update.json` (se borró al terminar la prueba para que la primera consulta real
+ocurra sola).
+
+**Nada publicado todavía.** No hay tag ni release: `make tag` es el paso de
+Jonattan después del merge. Hasta entonces el instalador de macOS instala `main`
+y lo dice en pantalla.
 
 ## Próximo paso
 
-**Un pack de ejemplo con sprites reales** (F1 en el plan). Hoy el renderer
-`sprites` está implementado y probado con un test, pero ninguna de las dos
-mascotas incluidas lo usa, así que nadie ve el camino completo. Bastan seis
-imágenes simples, incluso formas geométricas, con licencia clara.
+**Publicar `v0.2.0`** (F3 en el plan): mergear la PR, `git checkout main && git
+pull`, `make tag`, mirar el job `release` en Actions, y comprobar que
+`cmux-pet update --check` diga `Estás en la última versión publicada`. Es la
+primera vez que `release.yml` corre: si falla, se corrige y se vuelve a etiquetar
+(R8).
 
-Después, en orden de valor/esfuerzo: B10 (más renderers vectoriales, porque hoy un
-pack sin arte solo puede verse como droide aunque hable como gato) y B11 (galería
-del marketplace con capturas).
-
-Pendiente que no bloquea: falta un GIF o captura en el README. `make render`
-genera los PNG de los estados, pero capturar la ventana real necesita permiso de
-Grabación de Pantalla que un proceso automatizado no tiene.
+Después: probar `python pet.py --selftest` con `CMUX_PET_UPDATE_URL` en una máquina
+Windows real (R9), y marcar el job `port de Windows` como check obligatorio (B13).
 
 ## Historial
 
@@ -64,6 +79,8 @@ Grabación de Pantalla que un proceso automatizado no tiene.
 | 2026-07-31 | Diagnóstico de "no llegan las notificaciones": tres causas, la principal el socket de cmux rechazando procesos de launchd (`docs/adr/0001`) |
 | 2026-07-31 | Empaquetado: SPM librería + ejecutable, 20 archivos, tests, instalador, harness. CI encontró un archivo que el `.gitignore` excluía |
 | 2026-07-31 | Pivote a plataforma: pet packs, marketplace, CLI de mascotas, voz por personalidad (`docs/adr/0005`) |
+| 2026-08-02 | Comandos `sprite` y `fork`; renderers `vector:ball` y `vector:sage`; port de Windows en Python (PRs #2, #3, #4) |
+| 2026-09-17 | La versión es del producto: `VERSION`, guarda de integridad, release por tag, instalador al último release, y aviso de versión nueva con el mismo contrato en macOS y Windows (`docs/adr/0006`) |
 
 ## Trampas que ya costaron tiempo
 
@@ -89,6 +106,13 @@ No volver a caer en estas. Todas están documentadas con evidencia en
 9. **`NSImageView` como subvista no aparece en `cacheDisplay`**, así que
    `--render` salía vacío con sprites. Se cambió a dibujo directo, que además
    permitió animar GIF con el mismo reloj.
+10. **Una funcionalidad que solo existe en un runtime no es del producto.** El
+    aviso de actualización se pidió "global, sin depender de la plataforma": el
+    contrato va en `docs/reference/` y cada runtime lo implementa con los mismos
+    casos de prueba. Y el gate tiene que cubrir los dos: hasta esta sesión los
+    tests de Windows no corrían ni en `make verify` ni en CI.
+11. **`Config` de Windows descarta claves desconocidas.** Una preferencia nueva que
+    no esté en `DEFAULTS` se pierde en el siguiente `save()`.
 
 ## Checklist de fin de sesión
 
@@ -100,6 +124,7 @@ Antes de cerrar, sin excepciones:
       el contrato, y revisar que las dos mascotas incluidas sigan validando
 - [ ] Si cambió una decisión durable: ADR nuevo en `docs/adr/` (insert-once)
 - [ ] Si cambió el comportamiento de cara al usuario: README y `PRODUCT.md`
+- [ ] Si cambió un contrato de `docs/reference/`: los dos runtimes y sus dos tests
 - [ ] `EXECUTION-PLAN.md`: mover lo terminado a "Entregado" **con evidencia**
 - [ ] Actualizar "Estado verificado" y "Próximo paso" de este archivo
 - [ ] Working tree limpio o el pendiente anotado arriba

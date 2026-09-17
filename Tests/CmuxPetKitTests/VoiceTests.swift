@@ -97,7 +97,7 @@ final class VoiceTests: XCTestCase {
     func testLasClasesCoincidenConElFormatoDocumentado() {
         XCTAssertEqual(Set(Voice.kinds.keys), Set([
             "greeting", "agentDone", "commandDone", "commandError",
-            "attention", "working", "portUp", "portDown",
+            "attention", "working", "portUp", "portDown", "updateAvailable",
         ]))
     }
 
