@@ -71,6 +71,9 @@ jobs:
       - name: Integridad del repositorio
         run: ./scripts/test-repo-integrity.sh
 
+      - name: Herramientas de publicacion
+        run: ./scripts/test-release-tooling.sh
+
   # La revision automatica de un PR al marketplace. Valida las mascotas de este
   # repo y ademas clona y valida las que viven en repositorios de terceros: una
   # entrada que apunte a un paquete roto rompe `cmux-pet install` para todos.

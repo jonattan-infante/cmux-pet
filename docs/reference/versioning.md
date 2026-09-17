@@ -42,7 +42,10 @@ Si algo falla, no hay release y nadie recibe el aviso. Un tag sin release es un 
 que no cuenta.
 
 El paso humano es `make tag`, desde `main` al día con `origin/main`, después de que la
-PR que subió `VERSION` se mergeó.
+PR que subió `VERSION` se mergeó. Cómo tiene que ser el tag (anotado, firmado, con
+las notas en el mensaje, inmutable) y cómo se propone la versión y se redactan las
+notas está en [`tags.md`](tags.md); `scripts/check-tag.sh` lo verifica y
+`release.yml` lo exige.
 
 ## Qué se instala
 

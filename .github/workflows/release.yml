@@ -19,7 +19,14 @@ jobs:
     outputs:
       version: ${{ steps.v.outputs.version }}
     steps:
+      # Historia completa: check-tag necesita main y los demas tags para
+      # comprobar que el commit esta en main y que la version no retrocede.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: El tag cumple docs/reference/tags.md
+        run: ./scripts/check-tag.sh "$GITHUB_REF_NAME" --on origin/main
 
       - name: Tag == VERSION
         id: v
@@ -87,15 +94,10 @@ jobs:
           path: dist
 
       # Las notas son la seccion del CHANGELOG de esta version, tal cual.
+      # Las notas son la seccion del CHANGELOG, la misma que lleva el tag.
       - name: Notas desde el CHANGELOG
         run: |
-          v="${{ needs.verify.outputs.version }}"
-          awk -v v="$v" '
-            $0 ~ "^## \\[" v "\\]" { on = 1; next }
-            on && /^## \[/ { exit }
-            on { print }
-          ' CHANGELOG.md > notes.md
-          [[ -s notes.md ]] || { echo "notas vacias para $v" >&2; exit 1; }
+          ./scripts/changelog-section.sh "${{ needs.verify.outputs.version }}" > notes.md
           cat notes.md
 
       - name: Crear el release
