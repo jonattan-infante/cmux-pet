@@ -122,6 +122,43 @@ final class PetControllerIngestTests: XCTestCase {
         XCTAssertNil(pc.currentBubble, "el segundo aviso llega antes de 3s: no debe repetirse")
     }
 
+    // MARK: permiso/pregunta pendientes
+
+    func testNotificationDePermisoConRequestIdQuedaPendiente() {
+        let pc = makeController()
+        pc.ingest(NormalizedEvent(source: "t", name: .notification, sessionId: "s1", agent: "Claude",
+                                  tool: "Bash", requestId: "req-1", reason: .permission))
+        XCTAssertEqual(pc.pendingRequests["req-1"]?.kind, .permission)
+        XCTAssertEqual(pc.pendingRequests["req-1"]?.sessionId, "s1")
+        XCTAssertEqual(pc.pendingRequests["req-1"]?.tool, "Bash")
+    }
+
+    func testNotificationDePreguntaConRequestIdQuedaPendiente() {
+        let pc = makeController()
+        pc.ingest(NormalizedEvent(source: "t", name: .notification, sessionId: "s1", agent: "Claude",
+                                  requestId: "req-2", reason: .question))
+        XCTAssertEqual(pc.pendingRequests["req-2"]?.kind, .question)
+    }
+
+    func testNotificationGenericaNoQuedaPendienteAunqueTraigaRequestId() {
+        let pc = makeController()
+        pc.ingest(NormalizedEvent(source: "t", name: .notification, sessionId: "s1", agent: "Claude",
+                                  requestId: "req-3", reason: .generic))
+        XCTAssertTrue(pc.pendingRequests.isEmpty)
+    }
+
+    func testSweepExpiredRequestsQuitaLoViejo() {
+        let pc = makeController()
+        pc.pendingRequests["viejo"] = PendingRequest(requestId: "viejo", kind: .permission,
+                                                      sessionId: "s1", workspaceId: nil, tool: nil,
+                                                      createdAt: Date().addingTimeInterval(-200))
+        pc.pendingRequests["nuevo"] = PendingRequest(requestId: "nuevo", kind: .permission,
+                                                      sessionId: "s1", workspaceId: nil, tool: nil)
+        pc.sweepExpiredRequests()
+        XCTAssertNil(pc.pendingRequests["viejo"])
+        XCTAssertNotNil(pc.pendingRequests["nuevo"])
+    }
+
     // MARK: shell — supresion por pane
 
     func testComandoDeShellSeSuprimeSiMirasElPaneExacto() {

@@ -15,6 +15,8 @@ dependencias; en Windows observa Claude Code directamente.
    - toco el dibujo o la animación → `ARCHITECTURE.md` §Vistas
    - toco una fuente de eventos (cmux, hooks, o agrego una nueva) →
      `docs/reference/event-source.md` (es el contrato) + `docs/reference/cmux-events.md`
+   - toco cómo se responde un permiso o una pregunta → `docs/reference/agent-reply.md`
+     (es el contrato) + `docs/adr/0009`
    - toco los textos o la voz → `docs/adr/0002` y `docs/adr/0005`
    - decido si avisar o callar → `docs/adr/0004`
    - toco la versión, el release o el aviso de actualización → `docs/reference/versioning.md`
@@ -103,6 +105,11 @@ lucy update [--check]         # reinstalar la última publicada; --check solo co
 22. **Una fuente de eventos (`EventSource`) nunca decide mood ni compone
     texto.** Traduce su transporte a `NormalizedEvent`; el orquestador decide
     todo lo demás. Ver `docs/reference/event-source.md` y `docs/adr/0008`.
+23. **El contenido de `feed.list` (permiso/pregunta pendiente) nunca se
+    loguea ni se persiste.** Trae todos los workstreams activos, no solo los
+    de esta mascota; se descarta todo lo que no matchee el `requestId`
+    pendiente apenas se filtra. Ver `docs/reference/agent-reply.md` y
+    `docs/adr/0009`.
 
 ## Reglas de tags — obligatorio para cualquier agente de IA
 
@@ -155,6 +162,8 @@ que un pack está bien.
 | `Sources/LucyGlowKit/Controller/EventSource.swift` | contrato `EventSource` y `NormalizedEvent` |
 | `Sources/LucyGlowKit/Controller/Sources/` | adapters: `CmuxEventSource`, `ShellHookEventSource`, `WmuxEventSource` (esqueleto) |
 | `Sources/LucyGlowKit/Controller/` | orquestador: ingiere eventos normalizados, decide mood y texto |
+| `Sources/LucyGlowKit/Controller/PetController+Actions.swift` | acciones hacia cmux: saltar de workspace, responder permiso/pregunta |
+| `Sources/LucyGlowKit/Model/PendingRequest.swift` | un permiso/pregunta sin responder, por `requestId` |
 | `Sources/LucyGlowKit/Support/` | rutas, puente con el CLI de cmux, tailer de archivos, formateo |
 | `pets/` | mascotas incluidas: `astro`, `gatito`, `cangrejo` y `llama` |
 | `windows/` | port para Windows en Python: mismos packs, mismo contrato de voz y de versión |

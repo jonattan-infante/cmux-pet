@@ -191,11 +191,14 @@ final class CmuxEventSource: EventSource {
             let tool = payload["tool_name"] as? String
             return NormalizedEvent(source: id, name: .notification, sessionId: session,
                                    workspaceId: wsId, agent: agent, tool: tool,
+                                   requestId: payload["_opencode_request_id"] as? String,
                                    reason: tool == "AskUserQuestion" ? .question : .permission)
 
         case "agent.hook.AskUserQuestion":
             return NormalizedEvent(source: id, name: .notification, sessionId: session,
-                                   workspaceId: wsId, agent: agent, reason: .question)
+                                   workspaceId: wsId, agent: agent,
+                                   requestId: payload["_opencode_request_id"] as? String,
+                                   reason: .question)
 
         case "agent.hook.Notification":
             return NormalizedEvent(source: id, name: .notification, sessionId: session,

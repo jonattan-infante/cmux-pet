@@ -66,6 +66,30 @@ final class CmuxEventSourceTests: XCTestCase {
         XCTAssertEqual(e?.reason, .question)
     }
 
+    /// El campo esta mal nombrado (aparece igual con _source: claude, no solo
+    /// opencode) pero es el id que despues pide feed.permission.reply/
+    /// feed.question.reply — verificado a mano contra ~/.cmuxterm/events.jsonl
+    /// el 2026-09-17. Ver docs/reference/agent-reply.md.
+    func testPermissionRequestTraeElRequestIdDeCorrelacion() {
+        let e = src.translate(envelope("agent.hook.PermissionRequest",
+                                       payload: ["session_id": "s1", "tool_name": "Bash",
+                                                 "_opencode_request_id": "claude-s1-PermissionRequest-Bash-123"]))
+        XCTAssertEqual(e?.requestId, "claude-s1-PermissionRequest-Bash-123")
+    }
+
+    func testAskUserQuestionTraeElRequestIdDeCorrelacion() {
+        let e = src.translate(envelope("agent.hook.AskUserQuestion",
+                                       payload: ["session_id": "s1",
+                                                 "_opencode_request_id": "claude-s1-AskUserQuestion-456"]))
+        XCTAssertEqual(e?.requestId, "claude-s1-AskUserQuestion-456")
+    }
+
+    func testPermissionRequestSinRequestIdQuedaNil() {
+        let e = src.translate(envelope("agent.hook.PermissionRequest",
+                                       payload: ["session_id": "s1", "tool_name": "Bash"]))
+        XCTAssertNil(e?.requestId)
+    }
+
     func testNotificationGenericaEsGenerica() {
         let e = src.translate(envelope("agent.hook.Notification", payload: ["session_id": "s1"]))
         XCTAssertEqual(e?.name, .notification)
