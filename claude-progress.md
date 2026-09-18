@@ -168,17 +168,33 @@ contra `~/.cmuxterm/events.jsonl` real), `PetController.pendingRequests` +
 testeado con fixtures literales de `feed.list`), `replyPermission`,
 `replyQuestion`.
 
+PR2 (botones en la burbuja) también entregado:
+
+```
+make verify   -> compila + 143 tests Swift (11 nuevos) + 8 hooks + 14 instalador
+                 + 15 integridad + 11 mascotas + 19 release-tooling + 54 Python
+make render   -> burbuja-pendiente-0.png (permiso, Sí/No), burbuja-pendiente-1.png
+                 (pregunta, 3 opciones largas) — revisadas a ojo, se ven y miden bien
+```
+
+`BubbleView` gana su primer control interactivo (antes: cero `NSButton`/
+`NSTextField` en todo el árbol de vistas): cada opción es su propia línea
+clicable, con el mismo motor de `docs/adr/0003`. Los botones solo aparecen
+una vez que termina de "escribir", y el alto ya está reservado desde
+`size(for:)` — no hay salto en pantalla. `PetController.fetchPendingContent`
+es una costura de test, mismo patrón que `isCmuxFrontmost`.
+
 ⚠️ Pendiente, documentado en `docs/reference/agent-reply.md`: confirmar con
-un permiso/pregunta real (workspace descartable) que `{"delivered": true}`
-efectivamente mueve al agente, no solo que el JSON es válido. No se cierra
-la fase sin esa prueba.
+un permiso/pregunta real (workspace descartable) que un clic en la burbuja
+efectivamente mueve al agente, no solo que el RPC devuelve `delivered: true`
+contra un id inventado. No se cierra la fase sin esa prueba.
 
 ## Próximo paso
 
-PR2 de `docs/adr/0009` (F4 en `EXECUTION-PLAN.md`): botones en `BubbleView`
-para responder desde la burbuja, wiring en `PetController+Bubbles.swift`, y
-la verificación de punta a punta pendiente de arriba. Sin eso, o si se
-prefiere, retomar F1/F2 del backlog o F3 (OpenCode) cuando haya cómo
+Verificación de punta a punta pendiente de arriba (F4 en
+`EXECUTION-PLAN.md`): provocar un permiso/una pregunta reales, clic en la
+burbuja, confirmar en el pane que el agente recibió la respuesta. Sin eso, o
+si se prefiere, retomar F1/F2 del backlog o F3 (OpenCode) cuando haya cómo
 verificarlo.
 
 Pendiente de antes, sin resolver en esta sesión: **registrar la llave como

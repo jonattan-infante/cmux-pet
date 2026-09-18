@@ -147,6 +147,57 @@ final class PetControllerIngestTests: XCTestCase {
         XCTAssertTrue(pc.pendingRequests.isEmpty)
     }
 
+    func testNotificationDePermisoEnriqueceLaBurbujaConBotonesAlLlegarElContenido() {
+        let pc = makeController()
+        pc.fetchPendingContent = { _, completion in
+            completion(.permission(tool: "Bash", toolInput: "{\"command\":\"ls -la\"}"))
+        }
+        pc.ingest(NormalizedEvent(source: "t", name: .notification, sessionId: "s1", agent: "Claude",
+                                  tool: "Bash", requestId: "req-1", reason: .permission))
+        XCTAssertEqual(pc.currentBubble?.requestId, "req-1")
+        XCTAssertEqual(pc.currentBubble?.options.map { $0.id }, ["once", "deny"])
+        XCTAssertTrue(pc.currentBubble?.text.contains("ls -la") == true)
+    }
+
+    func testNotificationDePreguntaEnriqueceLaBurbujaConSusOpciones() {
+        let pc = makeController()
+        pc.fetchPendingContent = { _, completion in
+            completion(.question(options: [QuestionOption(id: "opt0", label: "Sí", description: "")]))
+        }
+        pc.ingest(NormalizedEvent(source: "t", name: .notification, sessionId: "s1", agent: "Claude",
+                                  requestId: "req-2", reason: .question))
+        XCTAssertEqual(pc.currentBubble?.options.map { $0.id }, ["opt0"])
+    }
+
+    func testSinContenidoLaBurbujaSeQuedaGenericaSinBotones() {
+        let pc = makeController()
+        pc.fetchPendingContent = { _, completion in completion(nil) }
+        pc.ingest(NormalizedEvent(source: "t", name: .notification, sessionId: "s1", agent: "Claude",
+                                  requestId: "req-3", reason: .permission))
+        XCTAssertNil(pc.currentBubble?.requestId)
+    }
+
+    /// Si el pendiente ya se respondio/expiro para cuando llega el contenido
+    /// (fetchPendingContent tarda), no hay que pisar lo que este mostrando la
+    /// burbuja con botones de una pregunta que ya no existe.
+    func testUnPendienteYaResueltoNoPisaLaBurbujaConBotonesTardios() {
+        let pc = makeController()
+        var savedCompletion: ((PendingRequestContent?) -> Void)?
+        pc.fetchPendingContent = { _, completion in savedCompletion = completion }
+        pc.ingest(NormalizedEvent(source: "t", name: .notification, sessionId: "s1", agent: "Claude",
+                                  requestId: "req-4", reason: .permission))
+        pc.pendingRequests.removeValue(forKey: "req-4")
+        pc.hideBubble()
+        savedCompletion?(.permission(tool: "Bash", toolInput: "{}"))
+        XCTAssertNil(pc.currentBubble)
+    }
+
+    func testResponderSinBurbujaPendienteNoHaceNada() {
+        let pc = makeController()
+        pc.respondToOption("once")
+        XCTAssertNil(pc.currentBubble)
+    }
+
     func testSweepExpiredRequestsQuitaLoViejo() {
         let pc = makeController()
         pc.pendingRequests["viejo"] = PendingRequest(requestId: "viejo", kind: .permission,

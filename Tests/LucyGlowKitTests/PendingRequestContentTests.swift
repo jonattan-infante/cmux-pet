@@ -43,4 +43,19 @@ final class PendingRequestContentTests: XCTestCase {
     func testFeedVacioDevuelveNil() {
         XCTAssertNil(PetController.extractPendingContent([], requestId: "cualquiera"))
     }
+
+    // MARK: summarizeToolInput
+
+    func testSacaElComandoDeUnToolInputDeBash() {
+        XCTAssertEqual(PetController.summarizeToolInput("{\"command\":\"ls -la\"}"), "ls -la")
+    }
+
+    func testSinCampoCommandDevuelveElJsonTalCual() {
+        let raw = "{\"file_path\":\"a.txt\"}"
+        XCTAssertEqual(PetController.summarizeToolInput(raw), raw)
+    }
+
+    func testJsonInvalidoDevuelveElTextoTalCual() {
+        XCTAssertEqual(PetController.summarizeToolInput("no es json"), "no es json")
+    }
 }

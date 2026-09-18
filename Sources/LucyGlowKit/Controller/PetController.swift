@@ -39,6 +39,10 @@ public final class PetController: NSObject, NSApplicationDelegate {
     var warnedSources: Set<String> = []
     /// Permisos/preguntas sin resolver, por requestId. Ver docs/reference/agent-reply.md.
     var pendingRequests: [String: PendingRequest] = [:]
+    /// Costura de test: como se busca el contenido real de un pendiente. En
+    /// produccion, RPC feed.list (PetController.fetchPendingContentDefault).
+    var fetchPendingContent: (String, @escaping (PendingRequestContent?) -> Void) -> Void
+        = PetController.fetchPendingContentDefault
     /// Costura de test: quien mira la terminal ahora mismo. En produccion, cmux.
     var isCmuxFrontmost: () -> Bool = {
         NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.cmuxterm.app"
@@ -119,6 +123,7 @@ public final class PetController: NSObject, NSApplicationDelegate {
         petView.onMenu = { [weak self] ev in self?.showMenu(ev) }
         petView.onHover = { [weak self] inside in self?.setHover(inside) }
         bubbleView.onClick = { [weak self] in self?.jumpToLastAlert() }
+        bubbleView.onOption = { [weak self] id in self?.respondToOption(id) }
     }
 
     func restoreAnchor() {
