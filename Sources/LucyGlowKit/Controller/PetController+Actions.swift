@@ -247,12 +247,65 @@ extension PetController {
         }
     }
 
-    /// Busca el contenido real de un pendiente en el feed de cmux.
-    func fetchPendingContent(requestId: String, completion: @escaping (PendingRequestContent?) -> Void) {
+    /// Implementacion real de la costura `fetchPendingContent`: busca el
+    /// contenido en el feed de cmux. Los tests la reemplazan por una version
+    /// sincrona, sin lanzar ningun proceso.
+    static func fetchPendingContentDefault(_ requestId: String, _ completion: @escaping (PendingRequestContent?) -> Void) {
         DispatchQueue.global(qos: .utility).async {
             let items = (cmuxJSON(["rpc", "feed.list", "{}"])?["items"] as? [[String: Any]]) ?? []
             let content = PetController.extractPendingContent(items, requestId: requestId)
             DispatchQueue.main.async { completion(content) }
+        }
+    }
+
+    /// Del `tool_input` crudo (JSON, sin redactar) de un permiso, el comando
+    /// si la herramienta es Bash-like; si no se puede parsear o no trae
+    /// `command`, devuelve el JSON tal cual (mejor mostrar algo que nada).
+    static func summarizeToolInput(_ raw: String) -> String {
+        guard let data = raw.data(using: .utf8),
+              let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        else { return raw }
+        return (obj["command"] as? String) ?? raw
+    }
+
+    /// Arma la burbuja con el contenido real y los botones. Nunca se muestra
+    /// si el pendiente ya se resolvio o expiro mientras se pedia el contenido
+    /// (lo llama el caller solo si `pendingRequests[requestId]` sigue ahi).
+    func showPendingRequest(_ requestId: String, content: PendingRequestContent, agent: String, ws: String) {
+        let text: String
+        let options: [BubbleOption]
+        switch content {
+        case .permission(let tool, let toolInput):
+            text = "\(agent) pide permiso para \(tool)\(ws):\n\(truncate(PetController.summarizeToolInput(toolInput), 140))"
+            options = [BubbleOption(id: PermissionReplyMode.once.rawValue, label: "Sí"),
+                       BubbleOption(id: PermissionReplyMode.deny.rawValue, label: "No")]
+        case .question(let opts):
+            guard !opts.isEmpty else { return }
+            text = "\(agent) pregunta\(ws):"
+            options = opts.map { BubbleOption(id: $0.id, label: $0.label) }
+        }
+        show(Bubble(mood: .attention, text: text, workspaceId: nil, sticky: true,
+                   requestId: requestId, options: options))
+    }
+
+    /// Un clic en una de las opciones de la burbuja. `currentBubble.requestId`
+    /// dice cual, `pendingRequests[..].kind` dice con que RPC responder.
+    func respondToOption(_ optionId: String) {
+        guard let rid = currentBubble?.requestId, let pending = pendingRequests[rid] else { return }
+        hideBubble()
+        let onResult: (Bool) -> Void = { [weak self] ok in
+            guard let self = self, !ok else { return }
+            // Nunca en silencio (regla 16): si ya expiro, se dice en pantalla.
+            self.show(Bubble(mood: .error,
+                             text: "No pude enviar la respuesta: puede que ya haya expirado. Respondé desde la terminal.",
+                             workspaceId: nil, sticky: false))
+        }
+        switch pending.kind {
+        case .permission:
+            guard let mode = PermissionReplyMode(rawValue: optionId) else { return }
+            replyPermission(requestId: rid, mode: mode, onResult: onResult)
+        case .question:
+            replyQuestion(requestId: rid, selections: [optionId], onResult: onResult)
         }
     }
 

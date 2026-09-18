@@ -90,6 +90,40 @@ public func renderShowcase(to dir: URL) {
         }
     }
 
+    // Burbujas con botones: permiso y pregunta pendientes (docs/adr/0009).
+    // Solo con debugReveal=1: las opciones no se pintan a mitad de escritura.
+    let pending: [Bubble] = [
+        Bubble(mood: .attention,
+              text: "Claude pide permiso para Bash en Fineract:\nrm -rf build/",
+              workspaceId: nil, sticky: true, requestId: "r1",
+              options: [BubbleOption(id: "once", label: "Sí"), BubbleOption(id: "deny", label: "No")]),
+        Bubble(mood: .attention, text: "Claude pregunta en Backend:", workspaceId: nil, sticky: true,
+              requestId: "r2",
+              options: [BubbleOption(id: "opt0", label: "Los mismos créditos de antes"),
+                        BubbleOption(id: "opt1", label: "Una lista nueva"),
+                        BubbleOption(id: "opt2", label: "Otra cosa, dejame explicar")]),
+    ]
+    for (i, b) in pending.enumerated() {
+        let bs = BubbleView.size(for: b)
+        let view = BubbleView(frame: CGRect(origin: .zero, size: bs))
+        view.bubble = b
+        view.debugReveal = 1.0
+        let canvas = NSImage(size: CGSize(width: bs.width + 20, height: bs.height + 20))
+        canvas.lockFocus()
+        NSColor(srgbRed: 0.30, green: 0.32, blue: 0.36, alpha: 1).setFill()
+        NSBezierPath(rect: CGRect(origin: .zero, size: canvas.size)).fill()
+        if let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) {
+            view.cacheDisplay(in: view.bounds, to: rep)
+            rep.draw(in: CGRect(x: 10, y: 10, width: bs.width, height: bs.height))
+        }
+        canvas.unlockFocus()
+        if let tiff = canvas.tiffRepresentation,
+           let bmp = NSBitmapImageRep(data: tiff),
+           let png = bmp.representation(using: .png, properties: [:]) {
+            try? png.write(to: dir.appendingPathComponent("burbuja-pendiente-\(i).png"))
+        }
+    }
+
     // Panel de estado en vivo.
     let accent = Mood.working.accent
     let rosterLines: [(String, NSColor?)] = [

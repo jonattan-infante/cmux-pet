@@ -85,6 +85,30 @@ descartable, no una sesión de trabajo) que confirme que el agente sigue con
 la respuesta — pendiente de hacerse antes de considerar la fase 1 cerrada
 del todo. Ver `docs/adr/0009`.
 
+## La burbuja (PR2)
+
+`BubbleView` gana su primer control interactivo (antes: cero `NSButton`/
+`NSTextField` en todo el árbol de vistas). Cada `BubbleOption` de
+`Bubble.options` se dibuja como su propia línea (`"  › <label>"`), con el
+mismo motor de `docs/adr/0003` (nunca `boundingRect` + `draw(with:)`
+mezclados) — no hay pills ni flow-wrap: una lista vertical es lo que entra en
+los 272px de ancho fijo, y sirve igual para dos botones (permiso) que para
+varias opciones largas (pregunta). Los botones solo se pintan y se pueden
+clicar una vez que termina de "escribir" (`revealed(b) >= b.text.count`):
+aparecer a mitad de camino es ruido, y el alto ya está reservado desde
+`size(for:)` — no hay salto en pantalla. `mouseUp` primero busca si el clic
+cayó en un `optionRect`; si no, cae al comportamiento de siempre (saltar al
+workspace del aviso).
+
+`PetController.respondToOption(_:)` mapea el `id` clicado a
+`replyPermission`/`replyQuestion` según `pendingRequests[requestId].kind`. Un
+fallo del RPC muestra una burbuja de error (regla 16) en vez de quedar mudo.
+
+`PetController.fetchPendingContent` es una costura de test (mismo patrón que
+`isCmuxFrontmost`/`CmuxEventSource.isShowingAttention`): en producción hace
+el RPC real; los tests la reemplazan por una versión síncrona sin lanzar
+`cmux`.
+
 ## Reparto de responsabilidad
 
 | | Le toca al orquestador | Nunca |
@@ -111,10 +135,21 @@ del todo. Ver `docs/adr/0009`.
 
 `CmuxEventSourceTests.swift` prueba que `translate()` copia
 `_opencode_request_id` a `requestId` (payloads sintéticos, sin lanzar cmux).
-`PendingRequestContentTests.swift` prueba `extractPendingContent` contra
-fixtures literales con la forma real de `feed.list` — puro, sin proceso.
+`PendingRequestContentTests.swift` prueba `extractPendingContent` y
+`summarizeToolInput` contra fixtures literales — puro, sin proceso.
 `PetControllerIngestTests.swift` prueba que un `.notification` con
-`reason: .permission`/`.question` y `requestId` queda en `pendingRequests`, y
-que uno genérico no. `replyPermission`/`replyQuestion` lanzan `cmux` de
-verdad: no hay unit test para eso, mismo criterio que el resto de
-`CmuxCLI.swift` — se verifican a mano (ver arriba y el ⚠️ pendiente).
+`reason: .permission`/`.question` y `requestId` queda en `pendingRequests`,
+que la burbuja se enriquece con botones cuando `fetchPendingContent` (con la
+costura de test) trae contenido, y que un pendiente ya resuelto no se pisa
+con botones tardíos. `BubbleViewTests.swift` prueba que `size(for:)` crece
+con las opciones. `replyPermission`/`replyQuestion` lanzan `cmux` de verdad:
+no hay unit test para eso, mismo criterio que el resto de `CmuxCLI.swift` —
+se verifican a mano (ver arriba).
+
+⚠️ **Verificación de punta a punta pendiente** (real, no contra un
+`request_id` inventado): provocar un permiso y una pregunta reales en un
+workspace descartable, hacer clic en un botón desde la burbuja de verdad, y
+confirmar en el pane de cmux que el agente siguió con esa respuesta. `make
+render` ya confirmó que la burbuja se ve y mide bien
+(`render/burbuja-pendiente-0.png`, `-1.png`), pero eso no reemplaza probar el
+RPC contra un pendiente vivo.

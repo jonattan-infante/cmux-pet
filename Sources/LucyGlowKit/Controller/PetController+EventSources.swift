@@ -135,6 +135,13 @@ extension PetController {
                                                       kind: e.reason == .permission ? .permission : .question,
                                                       sessionId: session, workspaceId: e.workspaceId,
                                                       tool: e.tool)
+                // El contenido real llega aparte (feed.list, sin redactar): la
+                // burbuja de arriba ya avisó con el texto generico: si esto
+                // tarda o falla, el usuario no se queda sin nada.
+                fetchPendingContent(rid) { [weak self] content in
+                    guard let self = self, let content = content, self.pendingRequests[rid] != nil else { return }
+                    self.showPendingRequest(rid, content: content, agent: agent, ws: ws)
+                }
             }
 
         case .shellCommand:
