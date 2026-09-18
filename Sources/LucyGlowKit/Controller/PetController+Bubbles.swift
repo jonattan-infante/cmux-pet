@@ -33,6 +33,7 @@ extension PetController {
 
     func maybeNarrate() {
         sweepStaleActivities()
+        sweepExpiredRequests()
         guard config.narrateEverySeconds > 0, !config.quiet else { return }
         guard !activities.isEmpty, currentBubble == nil, !hovering else { return }
         if let last = lastNarrationAt,

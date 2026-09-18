@@ -128,6 +128,15 @@ extension PetController {
                         ]) ?? Wording.plain(fallback),
                         workspaceId: e.workspaceId, sticky: true))
 
+            // Solo permiso/pregunta se pueden responder; una notificacion
+            // generica no tiene con que RPC contestarse.
+            if let rid = e.requestId, e.reason == .permission || e.reason == .question {
+                pendingRequests[rid] = PendingRequest(requestId: rid,
+                                                      kind: e.reason == .permission ? .permission : .question,
+                                                      sessionId: session, workspaceId: e.workspaceId,
+                                                      tool: e.tool)
+            }
+
         case .shellCommand:
             if !config.notifyWhileWatching && userIsWatching(e.surfaceId) {
                 plog("suprimido (mirando el pane): \(e.command ?? "")")
@@ -196,6 +205,16 @@ extension PetController {
         }
         plog("barrida: \(dead.count) sesión(es) sin señal por 10 min")
         refreshRestingMood()
+    }
+
+    /// Un permiso/pregunta sin responder deja de ofrecerse pasado un margen:
+    /// cmux los expira solo (~2 min observado, sin número garantizado por
+    /// verificar — docs/reference/agent-reply.md), y un botón que ya no sirve
+    /// es peor que no mostrarlo.
+    func sweepExpiredRequests() {
+        let cutoff = Date().addingTimeInterval(-90)
+        let dead = pendingRequests.filter { $0.value.createdAt < cutoff }.map { $0.key }
+        for k in dead { pendingRequests.removeValue(forKey: k) }
     }
 
     /// Las lineas del panel de estado. Vacio si no hay nada corriendo.

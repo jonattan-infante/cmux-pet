@@ -27,6 +27,13 @@ func cmuxJSON(_ args: [String]) -> [String: Any]? {
     return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
 }
 
+/// Arma el JSON de parametros para `cmux rpc <metodo> <json>` sin concatenar
+/// strings a mano (un id o una seleccion con comillas rompería eso).
+func cmuxParams(_ dict: [String: Any]) -> String {
+    (try? JSONSerialization.data(withJSONObject: dict))
+        .flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+}
+
 /// Lanza cmux y olvida. No bloquea.
 func cmuxFire(_ args: [String]) {
     DispatchQueue.global(qos: .utility).async {

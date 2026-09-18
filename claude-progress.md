@@ -135,12 +135,51 @@ implementar — no hay cómo probar el plugin-puente contra una instalación
 real de OpenCode, y el mapeo de eventos no se da por bueno sin esa prueba
 (ver docs/reference/event-source.md).
 
+## Responder permiso/pregunta desde la burbuja (PR1 de 2, `docs/adr/0009`)
+
+Pedido del autor: que la mascota deje de ser pasiva — responder un permiso o
+una pregunta de Claude desde la burbuja, con el contenido real, sin ir a la
+terminal. Investigación con comandos reales contra el cmux instalado:
+`cmux capabilities` confirmó un RPC de escritura sin usar
+(`feed.permission.reply`, `feed.question.reply`, `workspace.prompt_submit`,
+entre otros); el esquema exacto de los dos primeros se verificó **sin tocar
+ningún permiso/pregunta real** (`cmux rpc feed.permission.reply '{}'` revela
+los campos que exige vía su propio error de validación). Todo documentado
+con evidencia en `docs/reference/agent-reply.md`.
+
+Hallazgo que definió el alcance: `BubbleView` no tiene ningún control
+interactivo hoy y `PetPanel` no puede tomar foco de teclado
+(`canBecomeKey = false`) — esta fase se limita a responder con clics
+(permiso: `mode` once/deny; pregunta: elegir una `question_options`), no a
+texto libre. Eso queda para una decisión aparte (ver "Fuera de alcance" en
+el ADR).
+
+PR1 (plomería, sin UI todavía) entregado en `feat/responder-permiso-pregunta`:
+
+```
+make verify   -> compila + 132 tests Swift (10 nuevos) + 8 hooks + 14 instalador
+                 + 15 integridad + 11 mascotas + 19 release-tooling + 54 Python
+```
+
+`NormalizedEvent.requestId` (extraído de `_opencode_request_id`, verificado
+contra `~/.cmuxterm/events.jsonl` real), `PetController.pendingRequests` +
+`sweepExpiredRequests()`, y en `PetController+Actions.swift`:
+`fetchPendingContent` (puro vía `PetController.extractPendingContent`,
+testeado con fixtures literales de `feed.list`), `replyPermission`,
+`replyQuestion`.
+
+⚠️ Pendiente, documentado en `docs/reference/agent-reply.md`: confirmar con
+un permiso/pregunta real (workspace descartable) que `{"delivered": true}`
+efectivamente mueve al agente, no solo que el JSON es válido. No se cierra
+la fase sin esa prueba.
+
 ## Próximo paso
 
-Los cuatro PR planeados en `docs/adr/0008` están cerrados salvo OpenCode
-(F3 en `EXECUTION-PLAN.md`), que queda explícitamente pendiente de una
-instalación real donde probarlo. Sin próximo paso forzado: retomar F1/F2 del
-backlog o volver a F3 cuando haya cómo verificar OpenCode.
+PR2 de `docs/adr/0009` (F4 en `EXECUTION-PLAN.md`): botones en `BubbleView`
+para responder desde la burbuja, wiring en `PetController+Bubbles.swift`, y
+la verificación de punta a punta pendiente de arriba. Sin eso, o si se
+prefiere, retomar F1/F2 del backlog o F3 (OpenCode) cuando haya cómo
+verificarlo.
 
 Pendiente de antes, sin resolver en esta sesión: **registrar la llave como
 signing key en GitHub** (B14), para que los tags aparezcan "Verified" en vez

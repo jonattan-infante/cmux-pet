@@ -37,6 +37,8 @@ public final class PetController: NSObject, NSApplicationDelegate {
 
     var sources: [EventSource] = []
     var warnedSources: Set<String> = []
+    /// Permisos/preguntas sin resolver, por requestId. Ver docs/reference/agent-reply.md.
+    var pendingRequests: [String: PendingRequest] = [:]
     /// Costura de test: quien mira la terminal ahora mismo. En produccion, cmux.
     var isCmuxFrontmost: () -> Bool = {
         NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.cmuxterm.app"

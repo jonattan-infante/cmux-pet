@@ -30,6 +30,10 @@ struct NormalizedEvent {
     var command: String?
     var seconds: Double?
     var messagePreview: String?
+    /// Id de correlacion para responder un permiso o una pregunta pendiente
+    /// (`feed.permission.reply`/`feed.question.reply`). Ver
+    /// docs/reference/agent-reply.md.
+    var requestId: String?
     var reason: Reason = .generic
     var occurredAt = Date()
 }
